@@ -1,3 +1,3 @@
 class SplashConstants {
-  static const String SPLASLOGO = 'assets/logo/logo.png';
+  static const String SPLASLOGO = 'assets/logo/logoTransparant.png';
 }

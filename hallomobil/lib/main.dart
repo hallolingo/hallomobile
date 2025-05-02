@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hallomobil/pages/splash/splash_page.dart';
+import 'package:hallomobil/pages/home/router_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const SplashPage(),
+      home: const RouterPage(),
     );
   }
 }

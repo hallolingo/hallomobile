@@ -14,6 +14,7 @@ class _SplashPageState extends State<SplashPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
+  late Animation<double> _rotationAnimation;
 
   @override
   void initState() {
@@ -24,7 +25,16 @@ class _SplashPageState extends State<SplashPage>
       duration: const Duration(seconds: 3),
     );
 
+    // Scale animation: 0.0 to 1.0
     _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    // Rotation animation: 0 to 2π radians (360 degrees)
+    _rotationAnimation = Tween<double>(begin: 0.0, end: 2 * 3.14159).animate(
       CurvedAnimation(
         parent: _animationController,
         curve: Curves.easeInOut,
@@ -52,13 +62,21 @@ class _SplashPageState extends State<SplashPage>
     return Scaffold(
       backgroundColor: ColorConstants.WHITE,
       body: Center(
-        child: ScaleTransition(
-          scale: _scaleAnimation,
-          child: Image.asset(
-            SplashConstants.SPLASLOGO,
-            width: 150,
-            height: 150,
-          ),
+        child: AnimatedBuilder(
+          animation: _animationController,
+          builder: (context, child) {
+            return Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()
+                ..scale(_scaleAnimation.value)
+                ..rotateZ(_rotationAnimation.value),
+              child: Image.asset(
+                SplashConstants.SPLASLOGO,
+                width: 150,
+                height: 150,
+              ),
+            );
+          },
         ),
       ),
     );
