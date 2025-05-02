@@ -5,6 +5,7 @@ import 'package:hallomobil/pages/login/login_page.dart';
 import 'package:hallomobil/widgets/loginAndRegister/custom_input_field.dart';
 import 'package:hallomobil/widgets/loginAndRegister/custom_login_button.dart';
 import 'package:hallomobil/widgets/loginAndRegister/google_icon_button.dart';
+import 'package:hallomobil/widgets/loginAndRegister/login_prompt.dart';
 import 'package:hallomobil/widgets/loginAndRegister/or_divider_widget.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -59,6 +60,10 @@ class _RegisterPageState extends State<RegisterPage>
         ),
       );
     });
+  }
+
+  void _navigateToRouter() {
+    Navigator.pushReplacementNamed(context, '/router');
   }
 
   @override
@@ -130,7 +135,7 @@ class _RegisterPageState extends State<RegisterPage>
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.02),
                       CustomLoginButton(
-                        onPressed: () {},
+                        onPressed: _navigateToRouter,
                         text: RegisterConstants.SIGN_UP,
                         backgroundColor: ColorConstants.WHITE,
                         textColor: ColorConstants.MAINCOLOR,
@@ -152,24 +157,12 @@ class _RegisterPageState extends State<RegisterPage>
                       ),
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.02),
-                      GestureDetector(
+                      LoginPrompt(
                         onTap: _navigateToLogin,
-                        child: RichText(
-                          text: TextSpan(
-                            text: RegisterConstants.ALREADY_HAVE_ACCOUNT,
-                            style: TextStyle(color: ColorConstants.WHITE),
-                            children: [
-                              TextSpan(
-                                text: ' ${RegisterConstants.LOGIN_NOW}',
-                                style: TextStyle(
-                                  color: ColorConstants.WHITE,
-                                  fontWeight: FontWeight.bold,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        promptText: RegisterConstants.ALREADY_HAVE_ACCOUNT,
+                        actionText: RegisterConstants.SIGN_IN_NOW,
+                        promptColor: ColorConstants.WHITE,
+                        actionTextColor: ColorConstants.WHITE,
                       ),
                     ],
                   ),

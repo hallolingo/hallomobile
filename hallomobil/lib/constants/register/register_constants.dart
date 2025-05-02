@@ -12,6 +12,6 @@ class RegisterConstants {
   static const String ALREADY_HAVE_ACCOUNT = 'Zaten Hesabınız Var mı?';
   static const String LOGIN_NOW = 'Hemen Giriş Yap';
   static const String OR = 'ya da';
-  static const String SIGN_UP_NOW = 'Hemen Kayıt Ol';
+  static const String SIGN_IN_NOW = 'Hemen Giriş Yap';
   static const String LOGIN = 'Giriş Yap';
 }
