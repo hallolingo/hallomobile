@@ -6,7 +6,6 @@ import 'package:hallomobil/widgets/loginAndRegister/custom_login_button.dart';
 import 'package:hallomobil/widgets/loginAndRegister/google_icon_button.dart';
 import 'package:hallomobil/widgets/loginAndRegister/or_divider_widget.dart';
 import 'package:hallomobil/widgets/loginAndRegister/register_prompt.dart';
-import 'package:hallomobil/widgets/loginAndRegister/remember_me_checkbox.dart';
 import 'package:hallomobil/widgets/loginAndRegister/custom_input_field.dart';
 
 class LoginPage extends StatefulWidget {
@@ -123,14 +122,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.01),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          RememberMeCheckbox(
-                            label: LoginConstants.REMEMBER_ME,
-                            onChanged: (value) {
-                              setState(() {});
-                            },
-                          ),
                           Text(
                             LoginConstants.FORGOT_PASSWORD,
                             style: TextStyle(

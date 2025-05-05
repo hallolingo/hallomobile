@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 import 'package:hallomobil/constants/color/color_constants.dart';
 import 'package:hallomobil/constants/home/home_constants.dart';
 import 'package:hallomobil/widgets/router/home/app_bar_points.dart';
@@ -7,15 +10,29 @@ import 'package:hallomobil/widgets/router/home/lesson_progress_card.dart';
 import 'package:hallomobil/widgets/router/home/section_title.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  final User? user;
+  final DocumentSnapshot? userData;
+
+  const HomePage({
+    super.key,
+    this.user,
+    this.userData,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // Kullanıcı verisinden ders ilerlemelerini al
+    final levelData = userData?['level'] ?? {};
+    final skills = levelData['skills'] ?? {};
+
+    // Kullanıcı fotoğraf URL'sini al (Firebase Auth'dan veya Firestore'dan)
+    final String? photoUrl = user?.photoURL ?? userData?['photoUrl'];
+
     final List<Map<String, dynamic>> lessons = [
-      {'title': 'Gramer', 'progress': 0.48},
-      {'title': 'Okuma', 'progress': 0.75},
-      {'title': 'Konuşma', 'progress': 0.92},
-      {'title': 'Dinle ve Bul', 'progress': 0.57},
+      {'title': 'Gramer', 'progress': skills['grammar']?['progress'] ?? 0.0},
+      {'title': 'Okuma', 'progress': skills['reading']?['progress'] ?? 0.0},
+      {'title': 'Konuşma', 'progress': skills['writing']?['progress'] ?? 0.0},
+      {'title': 'Dinleme', 'progress': skills['listening']?['progress'] ?? 0.0},
     ];
 
     return Scaffold(
@@ -28,14 +45,25 @@ class HomePage extends StatelessWidget {
           width: MediaQuery.of(context).size.width * 0.5,
         ),
         centerTitle: false,
-        actions: const [AppBarPoints(points: 2400)],
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: ColorConstants.MAINCOLOR,
+          statusBarIconBrightness: Brightness.dark,
+        ),
+        actions: [
+          AppBarPoints(
+            points: userData?['score'] ?? 0,
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            const LanguageLevelCard(
-              level: 'Başlangıç',
-              imagePath: 'assets/logo/logo.png',
+            SizedBox(height: MediaQuery.of(context).size.width * 0.02),
+            LanguageLevelCard(
+              level: levelData['currentLevel'] ?? 'Başlangıç',
+              imagePath: photoUrl, // Düzeltilmiş kısım
+              userName: user?.displayName ?? userData?['name'] ?? 'Misafir',
+              progress: levelData['progress'] ?? 0.0,
             ),
             SizedBox(height: MediaQuery.of(context).size.width * 0.05),
             const SectionTitle(title: 'Ders Detayları'),

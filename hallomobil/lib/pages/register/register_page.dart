@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:hallomobil/app_router.dart';
 import 'package:hallomobil/constants/color/color_constants.dart';
 import 'package:hallomobil/constants/register/register_constants.dart';
 import 'package:hallomobil/pages/login/login_page.dart';
-import 'package:hallomobil/widgets/loginAndRegister/custom_input_field.dart';
-import 'package:hallomobil/widgets/loginAndRegister/custom_login_button.dart';
-import 'package:hallomobil/widgets/loginAndRegister/google_icon_button.dart';
+import 'package:hallomobil/widgets/custom_snackbar.dart';
+import 'package:hallomobil/widgets/loginAndRegister/auth/email_register_form.dart';
+import 'package:hallomobil/widgets/loginAndRegister/google/google_sign_in_button.dart';
 import 'package:hallomobil/widgets/loginAndRegister/login_prompt.dart';
 import 'package:hallomobil/widgets/loginAndRegister/or_divider_widget.dart';
 
@@ -63,7 +64,7 @@ class _RegisterPageState extends State<RegisterPage>
   }
 
   void _navigateToRouter() {
-    Navigator.pushReplacementNamed(context, '/router');
+    Navigator.pushReplacementNamed(context, AppRouter.router);
   }
 
   @override
@@ -114,47 +115,41 @@ class _RegisterPageState extends State<RegisterPage>
                       ),
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.02),
-                      CustomInputField(
-                        labelText: RegisterConstants.FULL_NAME,
-                        controller: _nameController,
-                        prefixIcon: Icons.person,
+
+                      // Email ile kayıt formu
+                      EmailRegisterForm(
+                        onSuccess: _navigateToRouter,
+                        nameController: _nameController,
+                        emailController: _emailController,
+                        passwordController: _passwordController,
                       ),
-                      SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.02),
-                      CustomInputField(
-                        labelText: RegisterConstants.EMAIL,
-                        controller: _emailController,
-                      ),
-                      SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.02),
-                      CustomInputField(
-                        labelText: RegisterConstants.PASSWORD,
-                        isPassword: true,
-                        controller: _passwordController,
-                      ),
-                      SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.02),
-                      CustomLoginButton(
-                        onPressed: _navigateToRouter,
-                        text: RegisterConstants.SIGN_UP,
-                        backgroundColor: ColorConstants.WHITE,
-                        textColor: ColorConstants.MAINCOLOR,
-                      ),
+
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.02),
                       OrDivider(),
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.02),
+
+                      // Google ile giriş butonu
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          CircularIconButton(
-                            image: AssetImage(RegisterConstants.GOOGLELOGO),
-                            onPressed: () {},
+                          GoogleSignInButton(
+                            onSuccess: _navigateToRouter,
+                            onError: () {
+                              showCustomSnackBar(
+                                context: context,
+                                message: 'Google ile giriş yapılamadı',
+                                isError: true,
+                              );
+                            },
                             backgroundColor: Colors.white,
+                            imagePath: RegisterConstants.GOOGLELOGO,
+                            context: context, // Context'i iletiyoruz
                           ),
                         ],
                       ),
+
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.02),
                       LoginPrompt(

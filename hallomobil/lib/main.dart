@@ -1,15 +1,45 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:hallomobil/app_router.dart';
+import 'package:hallomobil/firebase_options.dart';
 import 'package:hallomobil/pages/splash/splash_page.dart';
+import 'package:hallomobil/services/auth/email_auth_service.dart';
+import 'package:hallomobil/services/google/google_auth_service.dart';
+import 'package:provider/provider.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(
+    MultiProvider(
+      providers: [
+        Provider<GoogleAuthService>(
+          create: (_) => GoogleAuthService(
+            auth: FirebaseAuth.instance,
+            firestore: FirebaseFirestore.instance,
+            storage: FirebaseStorage.instance,
+          ),
+        ),
+        Provider<EmailAuthService>(
+          create: (_) => EmailAuthService(
+            auth: FirebaseAuth.instance,
+            firestore: FirebaseFirestore.instance,
+          ),
+        ),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

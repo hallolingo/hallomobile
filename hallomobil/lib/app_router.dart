@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:hallomobil/pages/dictionary/dictionary_page.dart';
 import 'package:hallomobil/pages/home/home_page.dart';
 import 'package:hallomobil/pages/home/router_page.dart';
+import 'package:hallomobil/pages/login/login_page.dart';
 import 'package:hallomobil/pages/profile/profile_page.dart';
+import 'package:hallomobil/pages/register/register_page.dart';
 import 'package:hallomobil/pages/splash/splash_page.dart';
 import 'package:hallomobil/pages/translate/translate_page.dart';
 
 class AppRouter {
   static const String splash = '/';
+  static const String login = '/login';
+  static const String register = '/register';
   static const String router = '/router';
   static const String home = '/home';
   static const String translate = '/translate';
@@ -18,6 +22,10 @@ class AppRouter {
     switch (settings.name) {
       case splash:
         return MaterialPageRoute(builder: (_) => const SplashPage());
+      case login:
+        return MaterialPageRoute(builder: (_) => const LoginPage());
+      case register:
+        return MaterialPageRoute(builder: (_) => const RegisterPage());
       case router:
         return MaterialPageRoute(builder: (_) => const RouterPage());
       case home:
