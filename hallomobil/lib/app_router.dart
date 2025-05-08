@@ -7,6 +7,7 @@ import 'package:hallomobil/pages/profile/profile_page.dart';
 import 'package:hallomobil/pages/register/register_page.dart';
 import 'package:hallomobil/pages/splash/splash_page.dart';
 import 'package:hallomobil/pages/translate/translate_page.dart';
+import 'package:hallomobil/pages/videos/videos_page.dart';
 
 class AppRouter {
   static const String splash = '/';
@@ -16,6 +17,7 @@ class AppRouter {
   static const String home = '/home';
   static const String translate = '/translate';
   static const String dictionary = '/dictionary';
+  static const String videos = '/videos';
   static const String profile = '/profile';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -34,6 +36,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const TranslationPage());
       case dictionary:
         return MaterialPageRoute(builder: (_) => const DictionaryPage());
+      case videos:
+        return MaterialPageRoute(builder: (_) => const VideosPage());
       case profile:
         return MaterialPageRoute(builder: (_) => const ProfilePage());
       default:

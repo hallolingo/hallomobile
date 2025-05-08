@@ -6,6 +6,7 @@ import 'package:hallomobil/pages/dictionary/dictionary_page.dart';
 import 'package:hallomobil/pages/home/home_page.dart';
 import 'package:hallomobil/pages/profile/profile_page.dart';
 import 'package:hallomobil/pages/translate/translate_page.dart';
+import 'package:hallomobil/pages/videos/videos_page.dart';
 import 'package:hallomobil/widgets/router/router/bottom_nav_bar.dart';
 import 'package:hallomobil/widgets/router/router/custom_fab.dart';
 
@@ -46,6 +47,7 @@ class _RouterPageState extends State<RouterPage> {
     const HomePage(),
     const TranslationPage(),
     const DictionaryPage(),
+    const VideosPage(),
     const ProfilePage(),
   ];
 
@@ -74,8 +76,8 @@ class _RouterPageState extends State<RouterPage> {
         onItemTapped: _onItemTapped,
       ),
       floatingActionButton: CustomFloatingActionButton(
-        isSelected: _selectedIndex == 3,
-        onPressed: () => _onItemTapped(3),
+        isSelected: _selectedIndex == 4,
+        onPressed: () => _onItemTapped(4),
         user: _currentUser, // Düzeltildi: currentUser -> _currentUser
         photoUrl: _userData?['photoUrl'], // Düzeltildi: userData -> _userData
         userName: _userData?['name'], // Düzeltildi: userData -> _userData
