@@ -10,14 +10,17 @@
     "logs": "firebase functions:log"
   },
   "engines": {
-    "node": "22"
+    "node": "20"
   },
   "main": "lib/index.js",
   "dependencies": {
     "firebase-admin": "^13.3.0",
-    "firebase-functions": "^6.3.2"
+    "firebase-functions": "^6.3.2",
+    "nodemailer": "^7.0.3"
   },
   "devDependencies": {
+    "@types/node": "^22.15.17",
+    "@types/nodemailer": "^6.4.17",
     "firebase-functions-test": "^3.1.0",
     "typescript": "^5.8.3"
   },

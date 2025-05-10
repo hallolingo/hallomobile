@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hallomobil/constants/color/color_constants.dart';
 import 'package:hallomobil/constants/register/register_constants.dart';
+import 'package:hallomobil/pages/register/verification_page.dart';
 import 'package:hallomobil/services/auth/email_auth_service.dart';
 import 'package:hallomobil/widgets/custom_snackbar.dart';
 import 'package:hallomobil/widgets/loginAndRegister/custom_input_field.dart';
@@ -37,17 +38,33 @@ class _EmailRegisterFormState extends State<EmailRegisterForm> {
       final emailAuthService =
           Provider.of<EmailAuthService>(context, listen: false);
 
-      await emailAuthService.registerWithEmail(
-        email: widget.emailController.text.trim(),
-        password: widget.passwordController.text.trim(),
-        name: widget.nameController.text.trim(),
+      // Doğrulama kodu gönder
+      await emailAuthService
+          .sendVerificationCode(widget.emailController.text.trim());
+
+      // Kullanıcıya bilgi göster
+      showCustomSnackBar(
+        context: context,
+        message: 'Doğrulama kodu e-posta adresinize gönderildi',
+        isError: false,
       );
 
-      widget.onSuccess();
+      // Doğrulama sayfasına yönlendir
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => VerificationCodePage(
+            email: widget.emailController.text.trim(),
+            name: widget.nameController.text.trim(),
+            password: widget.passwordController.text.trim(),
+            provider: 'email',
+          ),
+        ),
+      );
     } catch (e) {
       showCustomSnackBar(
         context: context,
-        message: 'Kayıt işlemi başarısız',
+        message: 'Hata: ${e.toString()}',
         isError: true,
       );
     } finally {

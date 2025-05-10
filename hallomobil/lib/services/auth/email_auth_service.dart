@@ -1,24 +1,38 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hallomobil/services/verification/verification_service.dart';
 
 class EmailAuthService {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
+  final VerificationService _verificationService;
 
   EmailAuthService({
     required FirebaseAuth auth,
     required FirebaseFirestore firestore,
+    required VerificationService verificationService,
   })  : _auth = auth,
-        _firestore = firestore;
+        _firestore = firestore,
+        _verificationService = verificationService;
 
-  Future<UserCredential?> registerWithEmail({
+  Future<void> sendVerificationCode(String email) async {
+    await _verificationService.sendVerificationCode(email);
+  }
+
+  Future<UserCredential> registerWithEmail({
     required String email,
     required String password,
     required String name,
+    required String verificationCode,
   }) async {
     try {
-      final UserCredential userCredential =
-          await _auth.createUserWithEmailAndPassword(
+      final isValid =
+          await _verificationService.verifyCode(email, verificationCode);
+      if (!isValid) {
+        throw Exception('Geçersiz doğrulama kodu');
+      }
+
+      final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -27,7 +41,7 @@ class EmailAuthService {
 
       return userCredential;
     } catch (e) {
-      throw Exception('Email ile kayıt hatası: $e');
+      throw Exception('Kayıt işlemi başarısız: $e');
     }
   }
 
@@ -36,30 +50,19 @@ class EmailAuthService {
       'uid': user.uid,
       'email': user.email,
       'name': name,
+      'photoUrl': null,
+      'score': 0,
       'createdAt': FieldValue.serverTimestamp(),
       'provider': 'email',
-      'photoUrl': '',
-      'score': 0,
+      'emailVerified': false,
       'level': {
-        'currentLevel': 'beginner', // beginner, intermediate, advanced
-        'progress': 0.0, // Genel ilerleme yüzdesi
+        'currentLevel': 'beginner',
+        'progress': 0.0,
         'skills': {
-          'reading': {
-            'progress': 0.0,
-            'lastPracticed': null,
-          },
-          'writing': {
-            'progress': 0.0,
-            'lastPracticed': null,
-          },
-          'listening': {
-            'progress': 0.0,
-            'lastPracticed': null,
-          },
-          'grammar': {
-            'progress': 0.0,
-            'lastPracticed': null,
-          },
+          'reading': {'progress': 0.0, 'lastPracticed': null},
+          'writing': {'progress': 0.0, 'lastPracticed': null},
+          'listening': {'progress': 0.0, 'lastPracticed': null},
+          'grammar': {'progress': 0.0, 'lastPracticed': null},
         },
       },
     };

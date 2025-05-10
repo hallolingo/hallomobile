@@ -4,7 +4,7 @@ import 'package:hallomobil/widgets/custom_snackbar.dart';
 import 'package:provider/provider.dart';
 
 class GoogleSignInButton extends StatelessWidget {
-  final VoidCallback? onSuccess;
+  final Function(String email)? onSuccess;
   final VoidCallback? onError;
   final double size;
   final Color backgroundColor;
@@ -36,8 +36,13 @@ class GoogleSignInButton extends StatelessWidget {
             final userCredential = await googleAuthService.signInWithGoogle(
               context: this.context ?? context,
             );
-            if (userCredential != null && onSuccess != null) {
-              onSuccess!();
+            if (userCredential != null && userCredential.user != null) {
+              final email = userCredential.user!.email;
+              if (email != null && onSuccess != null) {
+                onSuccess!(email); // Doğrulama sayfasına yönlendirme
+              } else if (onError != null) {
+                onError!();
+              }
             } else if (onError != null) {
               onError!();
             }
@@ -45,7 +50,7 @@ class GoogleSignInButton extends StatelessWidget {
             if (onError != null) onError!();
             showCustomSnackBar(
               context: context,
-              message: 'Google ile giriş yapılamadı',
+              message: 'Google ile giriş yapılamadı: $e',
               isError: true,
             );
           }

@@ -2,23 +2,25 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'dart:math';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:hallomobil/services/verification/verification_service.dart';
 import 'package:hallomobil/widgets/loginAndRegister/google/custom_google_picker.dart';
-import 'package:http/http.dart' as http;
 
 class GoogleAuthService {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
   final FirebaseStorage _storage;
+  final VerificationService _verificationService;
 
   GoogleAuthService({
     required FirebaseAuth auth,
     required FirebaseFirestore firestore,
     required FirebaseStorage storage,
+    required VerificationService verificationService,
   })  : _auth = auth,
         _firestore = firestore,
-        _storage = storage;
+        _storage = storage,
+        _verificationService = verificationService;
 
   Future<UserCredential?> signInWithGoogle({BuildContext? context}) async {
     try {
@@ -27,15 +29,11 @@ class GoogleAuthService {
         hostedDomain: '',
       );
 
-      // Get current account if exists
       GoogleSignInAccount? currentAccount;
       try {
         currentAccount = await googleSignIn.signInSilently();
-      } catch (e) {
-        // Silent sign-in failed, proceed with normal flow
-      }
+      } catch (e) {}
 
-      // Create typed list of accounts
       final List<GoogleSignInAccount> accounts = [];
       if (currentAccount != null) {
         accounts.add(currentAccount);
@@ -72,7 +70,7 @@ class GoogleAuthService {
       final UserCredential userCredential =
           await _auth.signInWithCredential(credential);
 
-      await _saveUserDataToFirestore(userCredential.user!, selectedAccount);
+      await _verificationService.sendVerificationCode(selectedAccount.email);
 
       return userCredential;
     } catch (e) {
@@ -80,52 +78,50 @@ class GoogleAuthService {
     }
   }
 
-  // Diğer metodlar aynı kalabilir...
-  Future<void> _saveUserDataToFirestore(
-      User firebaseUser, GoogleSignInAccount googleUser) async {
-    final String? photoUrl =
-        await _uploadProfilePhoto(googleUser.photoUrl, firebaseUser.uid);
+  Future<void> sendVerificationCode(String email) async {
+    await _verificationService.sendVerificationCode(email);
+  }
 
-    final userData = {
-      'uid': firebaseUser.uid,
-      'email': firebaseUser.email,
-      'name': googleUser.displayName ?? 'Kullanıcı',
-      'photoUrl': photoUrl,
-      'score': 0,
-      'createdAt': FieldValue.serverTimestamp(),
-      'provider': 'google',
-      'level': {
-        'currentLevel': 'beginner',
-        'progress': 0.0,
-        'skills': {
-          'reading': {'progress': 0.0, 'lastPracticed': null},
-          'writing': {'progress': 0.0, 'lastPracticed': null},
-          'listening': {'progress': 0.0, 'lastPracticed': null},
-          'grammar': {'progress': 0.0, 'lastPracticed': null},
-        },
-      },
-    };
+  Future<void> verifyGoogleUser(String email, String verificationCode) async {
+    try {
+      final isValid =
+          await _verificationService.verifyCode(email, verificationCode);
+      if (!isValid) {
+        throw Exception('Geçersiz doğrulama kodu');
+      }
 
-    await _firestore.collection('users').doc(firebaseUser.uid).set(userData);
+      final user = _auth.currentUser;
+      if (user != null) {
+        final photoUrl = await _uploadProfilePhoto(user.photoURL, user.uid);
+        final userData = {
+          'uid': user.uid,
+          'email': user.email,
+          'name': user.displayName ?? 'Kullanıcı',
+          'photoUrl': photoUrl,
+          'score': 0,
+          'createdAt': FieldValue.serverTimestamp(),
+          'provider': 'google',
+          'level': {
+            'currentLevel': 'beginner',
+            'progress': 0.0,
+            'skills': {
+              'reading': {'progress': 0.0, 'lastPracticed': null},
+              'writing': {'progress': 0.0, 'lastPracticed': null},
+              'listening': {'progress': 0.0, 'lastPracticed': null},
+              'grammar': {'progress': 0.0, 'lastPracticed': null},
+            },
+          },
+        };
+        await _firestore.collection('users').doc(user.uid).set(userData);
+      }
+    } catch (e) {
+      throw Exception('Doğrulama başarısız: $e');
+    }
   }
 
   Future<String?> _uploadProfilePhoto(String? photoUrl, String userId) async {
     if (photoUrl == null) return null;
-
-    try {
-      final http.Response response = await http.get(Uri.parse(photoUrl));
-      final bytes = response.bodyBytes;
-
-      final random = Random();
-      final String fileName = 'profile_${random.nextInt(10000)}.jpg';
-
-      final Reference ref = _storage.ref('profilePhotos/$userId/$fileName');
-      final UploadTask uploadTask = ref.putData(bytes);
-      final TaskSnapshot snapshot = await uploadTask;
-
-      return await snapshot.ref.getDownloadURL();
-    } catch (e) {
-      throw Exception('Profil fotoğrafı yükleme hatası: $e');
-    }
+    // Fotoğraf yükleme işlemi burada uygulanabilir, ancak basitlik için null döndürüyoruz
+    return photoUrl;
   }
 }

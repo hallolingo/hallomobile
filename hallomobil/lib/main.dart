@@ -8,6 +8,7 @@ import 'package:hallomobil/firebase_options.dart';
 import 'package:hallomobil/pages/splash/splash_page.dart';
 import 'package:hallomobil/services/auth/email_auth_service.dart';
 import 'package:hallomobil/services/google/google_auth_service.dart';
+import 'package:hallomobil/services/verification/verification_service.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
@@ -18,17 +19,25 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        Provider<GoogleAuthService>(
-          create: (_) => GoogleAuthService(
-            auth: FirebaseAuth.instance,
-            firestore: FirebaseFirestore.instance,
-            storage: FirebaseStorage.instance,
-          ),
+        Provider<VerificationService>(
+          create: (_) =>
+              VerificationService(firestore: FirebaseFirestore.instance),
         ),
         Provider<EmailAuthService>(
           create: (_) => EmailAuthService(
             auth: FirebaseAuth.instance,
             firestore: FirebaseFirestore.instance,
+            verificationService:
+                Provider.of<VerificationService>(_, listen: false),
+          ),
+        ),
+        Provider<GoogleAuthService>(
+          create: (_) => GoogleAuthService(
+            auth: FirebaseAuth.instance,
+            firestore: FirebaseFirestore.instance,
+            storage: FirebaseStorage.instance,
+            verificationService:
+                Provider.of<VerificationService>(_, listen: false),
           ),
         ),
       ],

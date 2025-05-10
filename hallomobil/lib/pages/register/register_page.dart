@@ -3,6 +3,7 @@ import 'package:hallomobil/app_router.dart';
 import 'package:hallomobil/constants/color/color_constants.dart';
 import 'package:hallomobil/constants/register/register_constants.dart';
 import 'package:hallomobil/pages/login/login_page.dart';
+import 'package:hallomobil/pages/register/verification_page.dart';
 import 'package:hallomobil/widgets/custom_snackbar.dart';
 import 'package:hallomobil/widgets/loginAndRegister/auth/email_register_form.dart';
 import 'package:hallomobil/widgets/loginAndRegister/google/google_sign_in_button.dart';
@@ -135,7 +136,17 @@ class _RegisterPageState extends State<RegisterPage>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           GoogleSignInButton(
-                            onSuccess: _navigateToRouter,
+                            onSuccess: (email) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => VerificationCodePage(
+                                    email: email,
+                                    provider: 'google',
+                                  ),
+                                ),
+                              );
+                            },
                             onError: () {
                               showCustomSnackBar(
                                 context: context,
@@ -145,7 +156,7 @@ class _RegisterPageState extends State<RegisterPage>
                             },
                             backgroundColor: Colors.white,
                             imagePath: RegisterConstants.GOOGLELOGO,
-                            context: context, // Context'i iletiyoruz
+                            context: context,
                           ),
                         ],
                       ),
