@@ -125,7 +125,7 @@ class _TranslationPageState extends State<TranslationPage> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: ColorConstants.MAINCOLOR.withOpacity(0.1),
+                      color: ColorConstants.MAINCOLOR,
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -164,7 +164,7 @@ class _TranslationPageState extends State<TranslationPage> {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: ColorConstants.MAINCOLOR.withOpacity(0.1),
+                        color: ColorConstants.MAINCOLOR,
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -187,7 +187,7 @@ class _TranslationPageState extends State<TranslationPage> {
                               vertical: 12, horizontal: 16),
                           decoration: BoxDecoration(
                             color: _sourceLanguage == language
-                                ? ColorConstants.MAINCOLOR.withOpacity(0.1)
+                                ? ColorConstants.MAINCOLOR
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -233,7 +233,7 @@ class _TranslationPageState extends State<TranslationPage> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: ColorConstants.MAINCOLOR.withOpacity(0.1),
+                      color: ColorConstants.MAINCOLOR,
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -272,7 +272,7 @@ class _TranslationPageState extends State<TranslationPage> {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black,
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -295,7 +295,7 @@ class _TranslationPageState extends State<TranslationPage> {
                               vertical: 12, horizontal: 16),
                           decoration: BoxDecoration(
                             color: _targetLanguage == language
-                                ? ColorConstants.MAINCOLOR.withOpacity(0.1)
+                                ? ColorConstants.MAINCOLOR
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -374,7 +374,7 @@ class _TranslationPageState extends State<TranslationPage> {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: ColorConstants.MAINCOLOR.withOpacity(0.1),
+                    color: ColorConstants.MAINCOLOR,
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),

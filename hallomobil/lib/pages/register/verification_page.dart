@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hallomobil/app_router.dart';
 import 'package:hallomobil/constants/color/color_constants.dart';
@@ -91,6 +92,7 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
     return _codeControllers.map((controller) => controller.text).join();
   }
 
+// VerificationCodePage'deki _verifyCode metodunu güncelleyin:
   Future<void> _verifyCode() async {
     if (!_isCodeComplete() || _isLoading) return;
 
@@ -115,11 +117,15 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
         );
       }
 
-      for (var controller in _codeControllers) {
-        controller.clear();
-      }
-
-      Navigator.pushReplacementNamed(context, AppRouter.router);
+      // Yeni dil seçim sayfasına yönlendir
+      Navigator.pushReplacementNamed(
+        context,
+        AppRouter.languageSelection,
+        arguments: {
+          'userId': FirebaseAuth.instance.currentUser!.uid,
+          'userEmail': widget.email,
+        },
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -248,7 +254,7 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
+                          color: Colors.grey,
                           spreadRadius: 1,
                           blurRadius: 4,
                           offset: const Offset(0, 2),

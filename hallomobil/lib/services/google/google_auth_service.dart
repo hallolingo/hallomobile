@@ -9,7 +9,6 @@ import 'package:hallomobil/widgets/loginAndRegister/google/custom_google_picker.
 class GoogleAuthService {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
-  final FirebaseStorage _storage;
   final VerificationService _verificationService;
 
   GoogleAuthService({
@@ -19,7 +18,6 @@ class GoogleAuthService {
     required VerificationService verificationService,
   })  : _auth = auth,
         _firestore = firestore,
-        _storage = storage,
         _verificationService = verificationService;
 
   Future<UserCredential?> signInWithGoogle({BuildContext? context}) async {
@@ -98,6 +96,9 @@ class GoogleAuthService {
           'email': user.email,
           'name': user.displayName ?? 'Kullanıcı',
           'photoUrl': photoUrl,
+          'isPremium': false,
+          'isEmailVerification': false,
+          'isSMSVerification': false,
           'score': 0,
           'createdAt': FieldValue.serverTimestamp(),
           'provider': 'google',

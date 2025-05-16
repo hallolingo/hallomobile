@@ -7,14 +7,25 @@ class LevelService {
 
   Future<void> updateSkillProgress({
     required String userId,
+    required String language, // Hangi dil için
     required String skill, // reading, writing, listening, grammar
     required double newProgress, // 0.0 - 100.0 arası
   }) async {
     try {
-      // Önce mevcut kullanıcı verilerini al
-      final doc = await _firestore.collection('users').doc(userId).get();
-      final userData = doc.data()!;
-      final levelData = userData['level'] as Map<String, dynamic>;
+      final userRef = _firestore.collection('users').doc(userId);
+      final doc = await userRef.get();
+
+      if (!doc.exists) throw Exception('Kullanıcı bulunamadı');
+
+      final data = doc.data()!;
+      final languages = data['languages'] as Map<String, dynamic>;
+
+      if (!languages.containsKey(language)) {
+        throw Exception('Dil bulunamadı');
+      }
+
+      final langData = languages[language] as Map<String, dynamic>;
+      final levelData = langData['level'] as Map<String, dynamic>;
       final currentLevel = levelData['currentLevel'] as String;
       final skills = levelData['skills'] as Map<String, dynamic>;
 
@@ -54,8 +65,8 @@ class LevelService {
       }
 
       // Firestore'da güncelleme yap
-      await _firestore.collection('users').doc(userId).update({
-        'level': {
+      await userRef.update({
+        'languages.$language.level': {
           'currentLevel': newLevel,
           'progress': levelUp ? 0.0 : averageProgress,
           'skills': skills,
@@ -72,6 +83,54 @@ class LevelService {
       return doc.data()!['level'] as Map<String, dynamic>;
     } catch (e) {
       throw Exception('Seviye bilgisi alınamadı: $e');
+    }
+  }
+
+  Future<void> addNewLanguage(String userId, String language) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'languages.$language': {
+          'level': {
+            'currentLevel': 'beginner',
+            'progress': 0.0,
+            'skills': {
+              'reading': {'progress': 0.0, 'lastPracticed': null},
+              'writing': {'progress': 0.0, 'lastPracticed': null},
+              'listening': {'progress': 0.0, 'lastPracticed': null},
+              'grammar': {'progress': 0.0, 'lastPracticed': null},
+            },
+          },
+          'createdAt': FieldValue.serverTimestamp(),
+        }
+      });
+    } catch (e) {
+      throw Exception('Dil eklenirken hata oluştu: $e');
+    }
+  }
+
+  // Aktif dil değiştirme fonksiyonu
+  Future<void> changeSelectedLanguage(String userId, String newLanguage) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .update({'selectedLanguage': newLanguage});
+    } catch (e) {
+      throw Exception('Aktif dil değiştirilirken hata oluştu: $e');
+    }
+  }
+
+  // Kullanıcının dillerini getirme fonksiyonu
+  Future<List<String>> getUserLanguages(String userId) async {
+    try {
+      final doc = await _firestore.collection('users').doc(userId).get();
+      final data = doc.data();
+      if (data == null || !data.containsKey('languages')) {
+        return [];
+      }
+      return (data['languages'] as Map).keys.cast<String>().toList();
+    } catch (e) {
+      throw Exception('Diller getirilirken hata oluştu: $e');
     }
   }
 

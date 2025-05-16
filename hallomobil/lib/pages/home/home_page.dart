@@ -21,13 +21,19 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Kullanıcı verisinden ders ilerlemelerini al
-    final levelData = userData?['level'] ?? {};
-    final skills = levelData['skills'] ?? {};
+    // Kullanıcının seçili dilini al
+    final String selectedLanguage = userData?['selectedLanguage'] ??
+        'Almanca'; // Varsayılan bir dil, eğer yoksa
+    final languages = userData?['languages'] as Map<String, dynamic>? ?? {};
+    final languageData =
+        languages[selectedLanguage] as Map<String, dynamic>? ?? {};
+    final levelData = languageData['level'] as Map<String, dynamic>? ?? {};
+    final skills = levelData['skills'] as Map<String, dynamic>? ?? {};
 
     // Kullanıcı fotoğraf URL'sini al (Firebase Auth'dan veya Firestore'dan)
     final String? photoUrl = user?.photoURL ?? userData?['photoUrl'];
 
+    // Ders ilerlemelerini seçili dile göre al
     final List<Map<String, dynamic>> lessons = [
       {'title': 'Gramer', 'progress': skills['grammar']?['progress'] ?? 0.0},
       {'title': 'Okuma', 'progress': skills['reading']?['progress'] ?? 0.0},
@@ -60,8 +66,9 @@ class HomePage extends StatelessWidget {
           children: [
             SizedBox(height: MediaQuery.of(context).size.width * 0.02),
             LanguageLevelCard(
+              language: selectedLanguage, // Seçili dili göster
               level: levelData['currentLevel'] ?? 'Başlangıç',
-              imagePath: photoUrl, // Düzeltilmiş kısım
+              imagePath: photoUrl,
               userName: user?.displayName ?? userData?['name'] ?? 'Misafir',
               progress: levelData['progress'] ?? 0.0,
             ),

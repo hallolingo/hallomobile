@@ -1,9 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hallomobil/app_router.dart';
 import 'package:hallomobil/constants/color/color_constants.dart';
 import 'package:hallomobil/constants/register/register_constants.dart';
-import 'package:hallomobil/pages/login/login_page.dart';
-import 'package:hallomobil/pages/register/verification_page.dart';
 import 'package:hallomobil/widgets/custom_snackbar.dart';
 import 'package:hallomobil/widgets/loginAndRegister/auth/email_register_form.dart';
 import 'package:hallomobil/widgets/loginAndRegister/google/google_sign_in_button.dart';
@@ -50,17 +49,7 @@ class _RegisterPageState extends State<RegisterPage>
 
   void _navigateToLogin() {
     _animationController.reverse().then((_) {
-      Navigator.push(
-        context,
-        PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 500),
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              FadeTransition(
-            opacity: animation,
-            child: const LoginPage(),
-          ),
-        ),
-      );
+      Navigator.pushReplacementNamed(context, AppRouter.login);
     });
   }
 
@@ -137,14 +126,14 @@ class _RegisterPageState extends State<RegisterPage>
                         children: [
                           GoogleSignInButton(
                             onSuccess: (email) {
-                              Navigator.push(
+                              Navigator.pushNamed(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (context) => VerificationCodePage(
-                                    email: email,
-                                    provider: 'google',
-                                  ),
-                                ),
+                                AppRouter.languageSelection,
+                                arguments: {
+                                  'userId':
+                                      FirebaseAuth.instance.currentUser!.uid,
+                                  'userEmail': email,
+                                },
                               );
                             },
                             onError: () {

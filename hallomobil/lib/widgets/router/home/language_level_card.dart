@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hallomobil/constants/color/color_constants.dart';
 
 class LanguageLevelCard extends StatelessWidget {
+  final String language;
   final String level;
   final String? imagePath;
   final String userName;
@@ -9,6 +10,7 @@ class LanguageLevelCard extends StatelessWidget {
 
   const LanguageLevelCard({
     super.key,
+    required this.language,
     required this.level,
     this.imagePath,
     required this.userName,
@@ -70,7 +72,7 @@ class LanguageLevelCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Almanca Seviyeniz',
+                      '$language Seviyeniz',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

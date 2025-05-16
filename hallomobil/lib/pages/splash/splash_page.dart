@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hallomobil/constants/color/color_constants.dart';
 import 'package:hallomobil/constants/splash/splash_constants.dart';
-import 'package:hallomobil/pages/login/login_page.dart';
 import 'package:hallomobil/app_router.dart';
 
 class SplashPage extends StatefulWidget {
@@ -61,10 +60,7 @@ class _SplashPageState extends State<SplashPage>
         Navigator.pushReplacementNamed(context, AppRouter.router);
       } else {
         // Kullanıcı giriş yapmamış, login sayfasına yönlendir
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-        );
+        Navigator.pushReplacementNamed(context, AppRouter.login);
       }
     }
   }
@@ -79,23 +75,40 @@ class _SplashPageState extends State<SplashPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ColorConstants.WHITE,
-      body: Center(
-        child: AnimatedBuilder(
-          animation: _animationController,
-          builder: (context, child) {
-            return Transform(
-              alignment: Alignment.center,
-              transform: Matrix4.identity()
-                ..scale(_scaleAnimation.value)
-                ..rotateZ(_rotationAnimation.value),
-              child: Image.asset(
-                SplashConstants.SPLASLOGO,
-                width: 150,
-                height: 150,
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Center(
+              child: AnimatedBuilder(
+                animation: _animationController,
+                builder: (context, child) {
+                  return Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.identity()
+                      ..scale(_scaleAnimation.value)
+                      ..rotateZ(_rotationAnimation.value),
+                    child: Image.asset(
+                      SplashConstants.SPLASLOGO,
+                      width: 150,
+                      height: 150,
+                    ),
+                  );
+                },
               ),
-            );
-          },
-        ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: Text(
+              'v 1.M.01',
+              style: TextStyle(
+                color: ColorConstants.BLACK, // Adjust color as needed
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

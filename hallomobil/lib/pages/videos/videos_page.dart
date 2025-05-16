@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hallomobil/app_router.dart';
 import 'package:hallomobil/constants/color/color_constants.dart';
 import 'package:hallomobil/data/models/video_model.dart';
-import 'package:hallomobil/pages/videos/video_detail_page.dart';
 import 'package:video_player/video_player.dart';
 import 'package:country_flags/country_flags.dart';
 
@@ -74,12 +74,13 @@ class _VideosPageState extends State<VideosPage> {
   }
 
   void _navigateToVideoDetail(Video video, VideoPlayerController controller) {
-    Navigator.push(
+    Navigator.pushNamed(
       context,
-      MaterialPageRoute(
-        builder: (context) =>
-            VideoDetailPage(video: video, controller: controller),
-      ),
+      AppRouter.videoDetail,
+      arguments: {
+        'video': video,
+        'controller': controller,
+      },
     );
   }
 
@@ -247,8 +248,7 @@ class _VideosPageState extends State<VideosPage> {
                                                     ? Icons.pause
                                                     : Icons.play_arrow,
                                                 size: 50,
-                                                color: Colors.white
-                                                    .withOpacity(0.8),
+                                                color: Colors.white,
                                               ),
                                               onPressed: () {
                                                 setState(() {
