@@ -28,7 +28,6 @@ class CustomFloatingActionButton extends StatelessWidget {
       onPressed: onPressed,
       backgroundColor:
           isSelected ? ColorConstants.MAINCOLOR : ColorConstants.WHITE,
-      elevation: 2,
       shape: const CircleBorder(),
       child: effectivePhotoUrl != null
           ? CircleAvatar(

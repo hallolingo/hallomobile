@@ -16,7 +16,6 @@ class CustomBottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return BottomAppBar(
       shape: const CircularNotchedRectangle(),
-      notchMargin: 8.0,
       color: ColorConstants.MAINCOLOR,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
