@@ -1,6 +1,9 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:hallomobil/constants/color/color_constants.dart';
 
 class ListeningFillBlankPage extends StatefulWidget {
@@ -20,6 +23,7 @@ class ListeningFillBlankPage extends StatefulWidget {
 class _ListeningFillBlankPageState extends State<ListeningFillBlankPage>
     with TickerProviderStateMixin {
   final AudioPlayer _audioPlayer = AudioPlayer();
+  final FlutterTts _flutterTts = FlutterTts();
 
   List<Map<String, dynamic>> _questions = [];
   int _currentQuestionIndex = 0;
@@ -41,7 +45,31 @@ class _ListeningFillBlankPageState extends State<ListeningFillBlankPage>
   void initState() {
     super.initState();
     _initAnimations();
+    _initTts();
     _fetchQuestions();
+  }
+
+  void _initTts() async {
+    if (Platform.isAndroid || Platform.isIOS) {
+      try {
+        await _flutterTts.setLanguage("de-DE");
+        await _flutterTts.setSpeechRate(0.6);
+        await _flutterTts.setVolume(1.0);
+        await _flutterTts.setPitch(1.0);
+      } catch (e) {
+        print('TTS initialization error: $e');
+      }
+    } else {
+      print('TTS not supported on this platform');
+    }
+  }
+
+  Future<void> _speakSentence() async {
+    try {
+      await _flutterTts.speak(_sentence);
+    } catch (e) {
+      print('TTS hatası: $e');
+    }
   }
 
   void _initAnimations() {
@@ -140,7 +168,11 @@ class _ListeningFillBlankPageState extends State<ListeningFillBlankPage>
 
     _playSound(isCorrect).then((_) {
       _bounceController.forward();
-      Future.delayed(const Duration(seconds: 2), () {
+      // TTS ile sentence'ı okut
+      _speakSentence(); // Bu satırı ekleyin
+
+      Future.delayed(const Duration(seconds: 4), () {
+        // Süreyi 4 saniyeye çıkarın
         if (mounted && _isAnswered) {
           _nextQuestion();
         }
@@ -674,6 +706,7 @@ class _ListeningFillBlankPageState extends State<ListeningFillBlankPage>
   @override
   void dispose() {
     _audioPlayer.dispose();
+    _flutterTts.stop(); // Bu satırı ekleyin
     _bounceController.dispose();
     _slideController.dispose();
     super.dispose();

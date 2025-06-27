@@ -16,7 +16,8 @@
 
 
 
-
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>We need speech recognition to enable text-to-speech functionality.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

@@ -24,8 +24,9 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
   bool _isDisposed = false;
   bool? _isPremium;
   bool _isLoadingPremiumStatus = true;
+  bool _premiumCheckCompleted = false;
 
-  // Animation Controllers - DictionaryPage tarzında
+  // Animation Controllers
   late AnimationController _animationController;
   late AnimationController _cardAnimationController;
   late Animation<double> _fadeAnimation;
@@ -36,7 +37,7 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
 
-    // Animation setup - DictionaryPage ile aynı
+    // Animation setup
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -60,7 +61,6 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
       curve: Curves.easeOutCubic,
     ));
 
-    // Create staggered animations for cards
     _cardAnimations = List.generate(2, (index) {
       return Tween<double>(begin: 0, end: 1).animate(
         CurvedAnimation(
@@ -110,9 +110,10 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
             _isPremium =
                 userDoc.exists && (userDoc.data()?['isPremium'] ?? false);
             _isLoadingPremiumStatus = false;
+            _premiumCheckCompleted = true;
           });
           if (_isPremium!) {
-            _fetchLanguages(); // Premium ise dilleri yükle
+            _fetchLanguages();
           }
         }
       } else {
@@ -120,6 +121,7 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
           setState(() {
             _isPremium = false;
             _isLoadingPremiumStatus = false;
+            _premiumCheckCompleted = true;
           });
         }
       }
@@ -129,9 +131,115 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
         setState(() {
           _isPremium = false;
           _isLoadingPremiumStatus = false;
+          _premiumCheckCompleted = true;
         });
       }
     }
+  }
+
+  void _navigateToHome() {
+    if (mounted) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRouter.router,
+        (route) => false,
+        arguments: {'initialIndex': 0},
+      );
+    }
+  }
+
+  Widget _buildNonPremiumMessage() {
+    return WillPopScope(
+      onWillPop: () async {
+        _navigateToHome();
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFFAFAFA),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.video_library_outlined,
+                  size: 80,
+                  color: Colors.grey[400],
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Premium Özellik',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: ColorConstants.TEXT_COLOR,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Video dersleri premium üyelere özel bir özelliktir. Premium üyelik satın alarak tüm video derslerine erişebilirsiniz.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _navigateToHome,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[200],
+                          foregroundColor: ColorConstants.TEXT_COLOR,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Ana Sayfaya Dön',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, AppRouter.premium);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorConstants.MAINCOLOR,
+                          foregroundColor: ColorConstants.WHITE,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Premium Al',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _fetchLanguages() async {
@@ -426,25 +534,9 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
       );
     }
 
-    // Premium değilse PremiumPage'e yönlendir
-    if (_isPremium == false) {
-      // Navigasyonu build dışında tetikle
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          Navigator.pushReplacementNamed(context, AppRouter.premium);
-        }
-      });
-      // Boş bir widget döndür
-      return const Scaffold(
-        backgroundColor: Color(0xFFFAFAFA),
-        body: Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation(ColorConstants.MAINCOLOR),
-          ),
-        ),
-      );
-      // Eğer AppRouter.premium yoksa, PremiumPage widget'ını direkt gösterebilirsiniz:
-      // return const PremiumPage();
+    // Premium kontrolü tamamlandı ve premium değilse özel mesaj göster
+    if (_premiumCheckCompleted && _isPremium == false) {
+      return _buildNonPremiumMessage();
     }
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
