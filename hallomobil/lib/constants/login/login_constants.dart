@@ -1,6 +1,7 @@
 class LoginConstants {
   //Images
-  static const String LOGINLOGO = 'assets/logo/bigLogo.png';
+  static const String LOGINLOGO =
+      'https://firebasestorage.googleapis.com/v0/b/hallolingo-2d19c.firebasestorage.app/o/logo%2FbigLogo.png?alt=media&token=3a5b6e61-2d73-40b9-bf00-8601626f5a40';
   static const String GOOGLELOGO = 'assets/images/google.png';
 
   //Text

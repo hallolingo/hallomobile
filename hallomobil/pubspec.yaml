@@ -23,6 +23,7 @@ dependencies:
   video_player: ^2.9.5
   country_flags: ^3.2.0
   video_player_platform_interface: ^6.3.0
+  audioplayers: ^6.5.0
 
 
 flutter_launcher_icons:
@@ -45,4 +46,6 @@ flutter:
     - assets/logo/
     - assets/videos/
     - assets/images/
+    - assets/sounds/correct.wav
+    - assets/sounds/incorrect.mp3
 

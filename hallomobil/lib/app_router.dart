@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hallomobil/data/models/video_model.dart';
 import 'package:hallomobil/pages/dictionary/dictionary_page.dart';
+import 'package:hallomobil/pages/home/dinleme/fill_blank_page.dart';
+import 'package:hallomobil/pages/home/dinleme/level_selection_page.dart';
 import 'package:hallomobil/pages/home/home_page.dart';
 import 'package:hallomobil/pages/home/router_page.dart';
 import 'package:hallomobil/pages/login/login_page.dart';
+import 'package:hallomobil/pages/premium/be_premium_screen.dart';
 import 'package:hallomobil/pages/profile/profile_page.dart';
 import 'package:hallomobil/pages/profile/settings/setting_page.dart';
 import 'package:hallomobil/pages/register/language_selection_page.dart';
 import 'package:hallomobil/pages/register/register_page.dart';
+import 'package:hallomobil/pages/register/verification_page.dart';
 import 'package:hallomobil/pages/splash/splash_page.dart';
 import 'package:hallomobil/pages/translate/translate_page.dart';
 import 'package:hallomobil/pages/videos/video_detail_page.dart';
@@ -28,6 +32,10 @@ class AppRouter {
   static const String languageSelection = '/languageSelection';
   static const String videoDetail = '/videoDetail';
   static const String settingsPage = '/settings';
+  static const String premium = '/premium';
+  static const String fillBlank = '/fillBlank';
+  static const String levelSelection = '/levelSelection';
+  static const String verificationCode = '/verificationCode';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -39,6 +47,16 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const RegisterPage());
       case router:
         return MaterialPageRoute(builder: (_) => const RouterPage());
+      case verificationCode:
+        final args = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          builder: (_) => VerificationCodePage(
+            email: args['email'] as String,
+            name: args['name'] as String?,
+            password: args['password'] as String?,
+            provider: args['provider'] as String,
+          ),
+        );
       case home:
         return MaterialPageRoute(builder: (_) => const HomePage());
       case translate:
@@ -49,25 +67,34 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const VideosPage());
       case profile:
         return MaterialPageRoute(builder: (_) => const ProfilePage());
-      case settingsPage:
-        final args = settings.arguments as Map<String, dynamic>?;
+      case premium:
+        return MaterialPageRoute(builder: (_) => const PremiumPage());
+      case levelSelection:
+        final selectedLanguage = settings.arguments as String;
+        return MaterialPageRoute(
+          builder: (_) =>
+              LevelSelectionPage(selectedLanguage: selectedLanguage),
+        );
+      case fillBlank:
+        final args = settings.arguments as Map<String, String>;
+        return MaterialPageRoute(
+          builder: (_) => ListeningFillBlankPage(
+            selectedLanguage: args['selectedLanguage']!,
+            selectedLevel: args['selectedLevel']!,
+          ),
+        );
+      case AppRouter.settingsPage:
         try {
+          final args = settings.arguments as Map<String, dynamic>? ?? {};
           return MaterialPageRoute(
-            builder: (_) => SettingsPage(
-              user: args?['user'] as User?,
-              userData: args?['userData'] as Map<String, dynamic>?,
+            builder: (context) => SettingsPage(
+              user: args['user'] as User?,
+              userData: args['userData'] as Map<String, dynamic>? ?? {},
             ),
           );
         } catch (e) {
-          // Error handling for debugging purposes
-          debugPrint('Error creating SettingsPage route: $e');
-          return MaterialPageRoute(
-            builder: (_) => Scaffold(
-              body: Center(
-                child: Text('Error loading settings: $e'),
-              ),
-            ),
-          );
+          debugPrint('Error in settings route: $e');
+          return _errorRoute(settings);
         }
       case videoDetail:
         final args = settings.arguments as Map<String, dynamic>;
@@ -94,5 +121,15 @@ class AppRouter {
           ),
         );
     }
+  }
+
+  static Route<dynamic> _errorRoute(RouteSettings settings) {
+    return MaterialPageRoute(
+      builder: (_) => Scaffold(
+        body: Center(
+          child: Text('Route hatası: ${settings.name}'),
+        ),
+      ),
+    );
   }
 }

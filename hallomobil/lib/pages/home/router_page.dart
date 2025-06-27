@@ -11,7 +11,9 @@ import 'package:hallomobil/widgets/router/router/bottom_nav_bar.dart';
 import 'package:hallomobil/widgets/router/router/custom_fab.dart';
 
 class RouterPage extends StatefulWidget {
-  const RouterPage({super.key});
+  final int initialIndex; // Başlangıç sekmesi parametresi
+
+  const RouterPage({super.key, this.initialIndex = 0});
 
   @override
   State<RouterPage> createState() => _RouterPageState();
@@ -25,6 +27,7 @@ class _RouterPageState extends State<RouterPage> {
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.initialIndex; // Başlangıç sekmesini ayarla
     _fetchUserData();
   }
 
@@ -76,11 +79,12 @@ class _RouterPageState extends State<RouterPage> {
         onItemTapped: _onItemTapped,
       ),
       floatingActionButton: CustomFloatingActionButton(
+        heroTag: 'router_tag',
         isSelected: _selectedIndex == 4,
         onPressed: () => _onItemTapped(4),
-        user: _currentUser, // Düzeltildi: currentUser -> _currentUser
-        photoUrl: _userData?['photoUrl'], // Düzeltildi: userData -> _userData
-        userName: _userData?['name'], // Düzeltildi: userData -> _userData
+        user: _currentUser,
+        photoUrl: _userData?['photoUrl'],
+        userName: _userData?['name'],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
     );

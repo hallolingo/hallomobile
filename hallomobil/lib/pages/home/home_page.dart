@@ -4,12 +4,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:hallomobil/constants/color/color_constants.dart';
 import 'package:hallomobil/constants/home/home_constants.dart';
+import 'package:hallomobil/pages/home/dinleme/listening_page.dart';
 import 'package:hallomobil/widgets/router/home/app_bar_points.dart';
 import 'package:hallomobil/widgets/router/home/language_level_card.dart';
 import 'package:hallomobil/widgets/router/home/lesson_progress_card.dart';
 import 'package:hallomobil/widgets/router/home/section_title.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   final User? user;
   final DocumentSnapshot? userData;
 
@@ -20,18 +21,127 @@ class HomePage extends StatelessWidget {
   });
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+  late AnimationController _animationController;
+  late AnimationController _cardAnimationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  late List<Animation<double>> _cardAnimations;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Animation setup - ProfilePage ile aynı
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+
+    _cardAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    // Create staggered animations for cards
+    _cardAnimations = List.generate(3, (index) {
+      return Tween<double>(begin: 0, end: 1).animate(
+        CurvedAnimation(
+          parent: _cardAnimationController,
+          curve: Interval(
+            index * 0.2,
+            0.6 + index * 0.2,
+            curve: Curves.easeOutBack,
+          ),
+        ),
+      );
+    });
+
+    _animationController.forward();
+    Future.delayed(const Duration(milliseconds: 300), () {
+      _cardAnimationController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _cardAnimationController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildModernCard({
+    required Widget child,
+    required int animationIndex,
+    EdgeInsets? margin,
+  }) {
+    return AnimatedBuilder(
+      animation:
+          _cardAnimations[animationIndex.clamp(0, _cardAnimations.length - 1)],
+      builder: (context, child) {
+        final animationValue =
+            _cardAnimations[animationIndex.clamp(0, _cardAnimations.length - 1)]
+                .value;
+        return Transform.scale(
+          scale: animationValue,
+          child: Opacity(
+            opacity: animationValue.clamp(0.0, 1.0),
+            child: child,
+          ),
+        );
+      },
+      child: Container(
+        margin: margin ?? const EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(
+          color: ColorConstants.WHITE,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: ColorConstants.MAINCOLOR.withOpacity(0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: child,
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Kullanıcının seçili dilini al
-    final String selectedLanguage = userData?['selectedLanguage'] ??
-        'Almanca'; // Varsayılan bir dil, eğer yoksa
-    final languages = userData?['languages'] as Map<String, dynamic>? ?? {};
+    final String selectedLanguage =
+        widget.userData?['selectedLanguage'] ?? 'Almanca';
+    final languages =
+        widget.userData?['languages'] as Map<String, dynamic>? ?? {};
     final languageData =
         languages[selectedLanguage] as Map<String, dynamic>? ?? {};
     final levelData = languageData['level'] as Map<String, dynamic>? ?? {};
     final skills = levelData['skills'] as Map<String, dynamic>? ?? {};
 
-    // Kullanıcı fotoğraf URL'sini al (Firebase Auth'dan veya Firestore'dan)
-    final String? photoUrl = user?.photoURL ?? userData?['photoUrl'];
+    // Kullanıcı fotoğraf URL'sini al
+    final String? photoUrl =
+        widget.user?.photoURL ?? widget.userData?['photoUrl'];
+    final String userName =
+        widget.user?.displayName ?? widget.userData?['name'] ?? 'Misafir';
+    final String initial = userName.isNotEmpty ? userName[0] : 'M';
 
     // Ders ilerlemelerini seçili dile göre al
     final List<Map<String, dynamic>> lessons = [
@@ -43,60 +153,360 @@ class HomePage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: ColorConstants.WHITE,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: ColorConstants.WHITE,
-        title: Image.asset(
-          HomeConstants.APPBARLOGO,
-          width: MediaQuery.of(context).size.width * 0.5,
-        ),
-        centerTitle: false,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: ColorConstants.MAINCOLOR,
-          statusBarIconBrightness: Brightness.dark,
-        ),
-        actions: [
-          AppBarPoints(
-            points: userData?['score'] ?? 0,
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: CustomScrollView(
+            slivers: [
+              // Modern Header
+              SliverAppBar(
+                expandedHeight: 95,
+                floating: false,
+                pinned: false,
+                backgroundColor: ColorConstants.WHITE,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Container(
+                    child: SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 20),
+                        child: Column(
+                          children: [
+                            // App Logo
+
+                            // Profile Picture and Points
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Image.asset(
+                                  HomeConstants.APPBARLOGO,
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.5,
+                                ),
+                                AppBarPoints(
+                                  points: widget.userData?['score'] ?? 0,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                systemOverlayStyle: const SystemUiOverlayStyle(
+                  statusBarColor: ColorConstants.MAINCOLOR,
+                  statusBarIconBrightness: Brightness.light,
+                ),
+              ),
+              // Content
+              SliverList(
+                delegate: SliverChildListDelegate([
+                  Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Language Level Card
+                        _buildModernCard(
+                          animationIndex: 0,
+                          child: LanguageLevelCard(
+                            language: selectedLanguage,
+                            level: levelData['currentLevel'] ?? 'Başlangıç',
+                            imagePath: photoUrl,
+                            userName: userName,
+                            progress: levelData['progress'] ?? 0.0,
+                          ),
+                        ),
+                        // Lesson Progress Card
+                        _buildModernCard(
+                          animationIndex: 1,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            ColorConstants.MAINCOLOR,
+                                            ColorConstants.SECONDARY_COLOR,
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(
+                                        Icons.school,
+                                        color: ColorConstants.WHITE,
+                                        size: 24,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    const Text(
+                                      'Ders Detayları',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: ColorConstants.TEXT_COLOR,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                GridView.count(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                  childAspectRatio: 1.2,
+                                  children: lessons.map((lesson) {
+                                    return LessonProgressCard(
+                                      title: lesson['title'],
+                                      progress: lesson['progress'],
+                                      onTap: lesson['title'] == 'Dinleme'
+                                          ? () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      ListeningPage(
+                                                    selectedLanguage:
+                                                        selectedLanguage,
+                                                  ),
+                                                ),
+                                              );
+                                            }
+                                          : null,
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        // Leaderboard Card
+                        _buildModernCard(
+                          animationIndex: 2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            ColorConstants.SECONDARY_COLOR,
+                                            ColorConstants.ACCENT_COLOR,
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(
+                                        Icons.leaderboard,
+                                        color: ColorConstants.WHITE,
+                                        size: 24,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    const Text(
+                                      'Liderlik Tablosu',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: ColorConstants.TEXT_COLOR,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                _buildLeaderboard(),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ]),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            SizedBox(height: MediaQuery.of(context).size.width * 0.02),
-            LanguageLevelCard(
-              language: selectedLanguage, // Seçili dili göster
-              level: levelData['currentLevel'] ?? 'Başlangıç',
-              imagePath: photoUrl,
-              userName: user?.displayName ?? userData?['name'] ?? 'Misafir',
-              progress: levelData['progress'] ?? 0.0,
-            ),
-            SizedBox(height: MediaQuery.of(context).size.width * 0.05),
-            const SectionTitle(title: 'Ders Detayları'),
-            const SizedBox(height: 16),
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: MediaQuery.of(context).size.width * 0.05,
-              ),
-              child: GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.2,
-                children: lessons.map((lesson) {
-                  return LessonProgressCard(
-                    title: lesson['title'],
-                    progress: lesson['progress'],
-                  );
-                }).toList(),
-              ),
-            ),
-          ],
         ),
       ),
     );
+  }
+
+  Widget _buildLeaderboard() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .orderBy('score', descending: true)
+          .limit(10)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(
+              color: ColorConstants.MAINCOLOR,
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return const Center(
+            child: Text(
+              'Liderlik tablosu yüklenirken hata oluştu',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 14,
+              ),
+            ),
+          );
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(
+            child: Text(
+              'Henüz liderlik tablosu verisi yok',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 14,
+              ),
+            ),
+          );
+        }
+
+        final users = snapshot.data!.docs;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: users.length,
+            itemBuilder: (context, index) {
+              final userDoc = users[index];
+              final userData = userDoc.data() as Map<String, dynamic>;
+              final userName = userData['name'] ?? 'Anonim';
+              final userScore = userData['score'] ?? 0;
+              final userPhoto = userData['photoUrl'];
+              final isCurrentUser = userDoc.id == widget.user?.uid;
+
+              return Container(
+                decoration: BoxDecoration(
+                  color: isCurrentUser
+                      ? ColorConstants.MAINCOLOR.withOpacity(0.1)
+                      : Colors.transparent,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Colors.grey.withOpacity(0.2),
+                      width: 0.5,
+                    ),
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListTile(
+                  leading: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: _getRankColor(index),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${index + 1}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.grey.withOpacity(0.3),
+                        backgroundImage:
+                            userPhoto != null ? NetworkImage(userPhoto) : null,
+                        child: userPhoto == null
+                            ? Icon(
+                                Icons.person,
+                                color: Colors.grey[600],
+                                size: 20,
+                              )
+                            : null,
+                      ),
+                    ],
+                  ),
+                  title: Text(
+                    userName,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight:
+                          isCurrentUser ? FontWeight.bold : FontWeight.w500,
+                      color: isCurrentUser
+                          ? ColorConstants.MAINCOLOR
+                          : Colors.black87,
+                    ),
+                  ),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: ColorConstants.MAINCOLOR.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${userScore} puan',
+                      style: const TextStyle(
+                        color: ColorConstants.MAINCOLOR,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Color _getRankColor(int index) {
+    switch (index) {
+      case 0:
+        return const Color(0xFFFFD700); // Altın
+      case 1:
+        return const Color(0xFFC0C0C0); // Gümüş
+      case 2:
+        return const Color(0xFFCD7F32); // Bronz
+      default:
+        return ColorConstants.MAINCOLOR;
+    }
   }
 }

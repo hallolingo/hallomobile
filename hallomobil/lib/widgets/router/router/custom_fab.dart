@@ -4,6 +4,7 @@ import 'package:hallomobil/constants/color/color_constants.dart';
 
 class CustomFloatingActionButton extends StatelessWidget {
   final bool isSelected;
+  final String heroTag;
   final VoidCallback onPressed;
   final User? user; // Firebase Auth kullanıcısı
   final String? photoUrl; // Alternatif fotoğraf URL'si
@@ -14,6 +15,7 @@ class CustomFloatingActionButton extends StatelessWidget {
     required this.isSelected,
     required this.onPressed,
     this.user,
+    required this.heroTag,
     this.photoUrl,
     this.userName,
   });
@@ -25,6 +27,7 @@ class CustomFloatingActionButton extends StatelessWidget {
     final String displayName = user?.displayName ?? userName ?? '?';
 
     return FloatingActionButton(
+      heroTag: heroTag,
       onPressed: onPressed,
       backgroundColor:
           isSelected ? ColorConstants.MAINCOLOR : ColorConstants.WHITE,

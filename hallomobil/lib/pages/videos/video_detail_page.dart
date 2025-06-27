@@ -1,7 +1,7 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hallomobil/constants/color/color_constants.dart';
 import 'package:hallomobil/data/models/video_model.dart';
 import 'package:video_player/video_player.dart';
 
@@ -20,39 +20,80 @@ class _VideoDetailPageState extends State<VideoDetailPage>
     with TickerProviderStateMixin {
   final TextEditingController _noteController = TextEditingController();
   final TextEditingController _questionController = TextEditingController();
-
   bool _isControlsVisible = true;
   bool _isFullScreen = false;
   bool _isVideoInitialized = false;
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
-
-  // Timer'ı iptal edebilmek için referans tutuyoruz
+  bool _isDisposed = false;
   Timer? _controlsTimer;
+
+  // Animation Controllers - DictionaryPage tarzında
+  late AnimationController _animationController;
+  late AnimationController _cardAnimationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  late List<Animation<double>> _cardAnimations;
 
   @override
   void initState() {
     super.initState();
 
-    // Video kontrolü ekleyelim
+    // Animation setup - DictionaryPage ile aynı
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+
+    _cardAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    // Create staggered animations for cards
+    _cardAnimations = List.generate(3, (index) {
+      return Tween<double>(begin: 0, end: 1).animate(
+        CurvedAnimation(
+          parent: _cardAnimationController,
+          curve: Interval(
+            index * 0.15,
+            0.5 + index * 0.15,
+            curve: Curves.easeOutBack,
+          ),
+        ),
+      );
+    });
+
+    _animationController.forward();
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (!_isDisposed && mounted) {
+        _cardAnimationController.forward();
+      }
+    });
+
+    // Video kontrolü
     if (widget.controller.value.isInitialized) {
       _initializeVideo();
     } else {
       widget.controller.addListener(_checkVideoInitialization);
     }
-
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
-    );
-    _fadeController.forward();
   }
 
   void _checkVideoInitialization() {
-    if (widget.controller.value.isInitialized && !_isVideoInitialized) {
+    if (widget.controller.value.isInitialized &&
+        !_isVideoInitialized &&
+        mounted) {
       setState(() {
         _isVideoInitialized = true;
       });
@@ -62,11 +103,9 @@ class _VideoDetailPageState extends State<VideoDetailPage>
   }
 
   void _startControlsTimer() {
-    // Mevcut timer'ı iptal et
     _controlsTimer?.cancel();
-
     _controlsTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted && _isControlsVisible) {
+      if (mounted && _isControlsVisible && !_isDisposed) {
         setState(() {
           _isControlsVisible = false;
         });
@@ -75,57 +114,61 @@ class _VideoDetailPageState extends State<VideoDetailPage>
   }
 
   void _toggleControls() {
-    setState(() {
-      _isControlsVisible = !_isControlsVisible; // Toggle yap
-    });
-
-    // Eğer kontroller görünürse timer başlat
-    if (_isControlsVisible) {
-      _startControlsTimer();
-    } else {
-      // Kontroller gizlendiyse timer'ı iptal et
-      _controlsTimer?.cancel();
+    if (!_isDisposed && mounted) {
+      setState(() {
+        _isControlsVisible = !_isControlsVisible;
+      });
+      if (_isControlsVisible) {
+        _startControlsTimer();
+      } else {
+        _controlsTimer?.cancel();
+      }
     }
   }
 
   void _initializeVideo() {
-    setState(() {
-      _isVideoInitialized = true;
-    });
-    widget.controller.play();
-    _startControlsTimer(); // Video başladığında kontrolleri göster ve 3 sn sonra gizle
+    if (!_isDisposed && mounted) {
+      setState(() {
+        _isVideoInitialized = true;
+      });
+      widget.controller.play();
+      _startControlsTimer();
+    }
   }
 
   void _togglePlayPause() {
-    setState(() {
-      if (widget.controller.value.isPlaying) {
-        widget.controller.pause();
-      } else {
-        widget.controller.play();
-      }
-      _isControlsVisible =
-          true; // Oynat/duraklat tıklandığında kontrolleri göster
-    });
-    _startControlsTimer(); // 3 saniye sonra gizle
+    if (!_isDisposed && mounted) {
+      setState(() {
+        if (widget.controller.value.isPlaying) {
+          widget.controller.pause();
+        } else {
+          widget.controller.play();
+        }
+        _isControlsVisible = true;
+      });
+      _startControlsTimer();
+    }
   }
 
   void _toggleFullScreen() {
-    setState(() {
-      _isFullScreen = !_isFullScreen;
-      _isControlsVisible = true; // Tam ekran değiştiğinde kontrolleri göster
-    });
+    if (!_isDisposed && mounted) {
+      setState(() {
+        _isFullScreen = !_isFullScreen;
+        _isControlsVisible = true;
+      });
 
-    if (_isFullScreen) {
-      SystemChrome.setPreferredOrientations([
-        DeviceOrientation.landscapeLeft,
-        DeviceOrientation.landscapeRight,
-      ]);
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    } else {
-      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      if (_isFullScreen) {
+        SystemChrome.setPreferredOrientations([
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]);
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      } else {
+        SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      }
+      _startControlsTimer();
     }
-    _startControlsTimer(); // 3 saniye sonra gizle
   }
 
   String _formatDuration(Duration duration) {
@@ -137,12 +180,14 @@ class _VideoDetailPageState extends State<VideoDetailPage>
 
   @override
   void dispose() {
+    _isDisposed = true;
     widget.controller.removeListener(_checkVideoInitialization);
     widget.controller.pause();
     _noteController.dispose();
     _questionController.dispose();
-    _fadeController.dispose();
-    _controlsTimer?.cancel(); // Timer'ı iptal et
+    _animationController.dispose();
+    _cardAnimationController.dispose();
+    _controlsTimer?.cancel();
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
@@ -153,9 +198,14 @@ class _VideoDetailPageState extends State<VideoDetailPage>
       return AspectRatio(
         aspectRatio: 16 / 9,
         child: Container(
-          color: Colors.black,
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(_isFullScreen ? 0 : 16),
+          ),
           child: const Center(
-            child: CircularProgressIndicator(color: Colors.white),
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation(ColorConstants.MAINCOLOR),
+            ),
           ),
         ),
       );
@@ -163,7 +213,7 @@ class _VideoDetailPageState extends State<VideoDetailPage>
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(_isFullScreen ? 0 : 16.0),
+        borderRadius: BorderRadius.circular(_isFullScreen ? 0 : 16),
         boxShadow: _isFullScreen
             ? []
             : [
@@ -175,7 +225,7 @@ class _VideoDetailPageState extends State<VideoDetailPage>
               ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(_isFullScreen ? 0 : 16.0),
+        borderRadius: BorderRadius.circular(_isFullScreen ? 0 : 16),
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -190,8 +240,8 @@ class _VideoDetailPageState extends State<VideoDetailPage>
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.transparent,
                       Colors.black.withOpacity(0.3),
+                      Colors.transparent,
                     ],
                   ),
                 ),
@@ -199,9 +249,8 @@ class _VideoDetailPageState extends State<VideoDetailPage>
             ),
             Positioned.fill(
               child: GestureDetector(
-                behavior: HitTestBehavior.opaque, // Tıklama her yerde algılanır
-                onTap:
-                    _toggleControls, // Videoya tıklandığında kontrolleri toggle et
+                behavior: HitTestBehavior.opaque,
+                onTap: _toggleControls,
                 child: Container(color: Colors.transparent),
               ),
             ),
@@ -216,14 +265,14 @@ class _VideoDetailPageState extends State<VideoDetailPage>
                   children: [
                     if (_isFullScreen)
                       Container(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.all(12.0),
                         child: Row(
                           children: [
                             IconButton(
                               onPressed: _toggleFullScreen,
                               icon: const Icon(
                                 Icons.fullscreen_exit,
-                                color: Colors.white,
+                                color: ColorConstants.WHITE,
                                 size: 28,
                               ),
                             ),
@@ -231,7 +280,7 @@ class _VideoDetailPageState extends State<VideoDetailPage>
                               child: Text(
                                 'Ders ${widget.video.key}',
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: ColorConstants.WHITE,
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -252,7 +301,7 @@ class _VideoDetailPageState extends State<VideoDetailPage>
                           widget.controller.value.isPlaying
                               ? Icons.pause
                               : Icons.play_arrow,
-                          color: Colors.white,
+                          color: ColorConstants.WHITE,
                           size: 48,
                         ),
                       ),
@@ -265,9 +314,9 @@ class _VideoDetailPageState extends State<VideoDetailPage>
                           VideoProgressIndicator(
                             widget.controller,
                             allowScrubbing: true,
-                            colors: const VideoProgressColors(
-                              playedColor: Colors.blue,
-                              bufferedColor: Colors.grey,
+                            colors: VideoProgressColors(
+                              playedColor: ColorConstants.MAINCOLOR,
+                              bufferedColor: Colors.grey[400]!,
                               backgroundColor: Colors.white24,
                             ),
                           ),
@@ -281,7 +330,7 @@ class _VideoDetailPageState extends State<VideoDetailPage>
                                   return Text(
                                     '${_formatDuration(value.position)} / ${_formatDuration(value.duration)}',
                                     style: const TextStyle(
-                                      color: Colors.white,
+                                      color: ColorConstants.WHITE,
                                       fontSize: 12,
                                     ),
                                   );
@@ -293,7 +342,7 @@ class _VideoDetailPageState extends State<VideoDetailPage>
                                   _isFullScreen
                                       ? Icons.fullscreen_exit
                                       : Icons.fullscreen,
-                                  color: Colors.white,
+                                  color: ColorConstants.WHITE,
                                   size: 24,
                                 ),
                               ),
@@ -313,62 +362,44 @@ class _VideoDetailPageState extends State<VideoDetailPage>
   }
 
   Widget _buildModernCard({
-    required String title,
     required Widget child,
-    IconData? icon,
+    required int animationIndex,
+    EdgeInsets? margin,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+    return AnimatedBuilder(
+      animation:
+          _cardAnimations[animationIndex.clamp(0, _cardAnimations.length - 1)],
+      builder: (context, child) {
+        final animationValue =
+            _cardAnimations[animationIndex.clamp(0, _cardAnimations.length - 1)]
+                .value;
+        return Transform.scale(
+          scale: animationValue,
+          child: Opacity(
+            opacity: animationValue.clamp(0.0, 1.0),
+            child: child,
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                if (icon != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      icon,
-                      color: Colors.blue,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                ],
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                ),
-              ],
+        );
+      },
+      child: Container(
+        margin: margin ?? const EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(
+          color: ColorConstants.WHITE,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: ColorConstants.MAINCOLOR.withOpacity(0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
-            const SizedBox(height: 16),
-            child,
           ],
         ),
+        child: child,
       ),
     );
   }
 
+  @override
   Widget build(BuildContext context) {
     if (_isFullScreen) {
       return Scaffold(
@@ -384,163 +415,415 @@ class _VideoDetailPageState extends State<VideoDetailPage>
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: Text(
-          'Ders ${widget.video.key}',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-        systemOverlayStyle: SystemUiOverlayStyle.dark,
-      ),
+      backgroundColor: const Color(0xFFFAFAFA),
       body: FadeTransition(
         opacity: _fadeAnimation,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Video Player - Sabit bir aspect ratio veriyoruz
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: _toggleControls,
-                child: AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: _buildVideoPlayer(),
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: CustomScrollView(
+            slivers: [
+              // Modern Header - DictionaryPage tarzında
+              SliverAppBar(
+                expandedHeight: 160,
+                floating: false,
+                pinned: false,
+                backgroundColor: ColorConstants.MAINCOLOR,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Container(
+                    color: ColorConstants.MAINCOLOR,
+                    child: SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Video Icon
+                            Hero(
+                              tag: 'video_detail_icon_${widget.video.id}',
+                              child: Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: ColorConstants.WHITE,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.15),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 6),
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  Icons.video_library,
+                                  size: 30,
+                                  color: ColorConstants.MAINCOLOR,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            // Title
+                            Text(
+                              'Ders ${widget.video.key}',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: ColorConstants.WHITE,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            // Subtitle
+                            Text(
+                              'Video dersi izle ve öğren',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: ColorConstants.WHITE.withOpacity(0.8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                automaticallyImplyLeading: true,
+                systemOverlayStyle: const SystemUiOverlayStyle(
+                  statusBarColor: ColorConstants.MAINCOLOR,
+                  statusBarIconBrightness: Brightness.light,
                 ),
               ),
-              const SizedBox(height: 24),
+              // Content
+              SliverList(
+                delegate: SliverChildListDelegate(
+                  [
+                    Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Video Player Card
+                          _buildModernCard(
+                            animationIndex: 0,
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              ColorConstants.MAINCOLOR,
+                                              ColorConstants.SECONDARY_COLOR,
+                                            ],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: const Icon(
+                                          Icons.video_library,
+                                          color: ColorConstants.WHITE,
+                                          size: 24,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      const Text(
+                                        'Video Ders',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: ColorConstants.TEXT_COLOR,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  AspectRatio(
+                                    aspectRatio: 16 / 9,
+                                    child: _buildVideoPlayer(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
 
-              // Not ve soru bölümleri aynı şekilde kalabilir...
-              _buildModernCard(
-                title: 'Not Al',
-                icon: Icons.edit_note,
-                child: TextField(
-                  controller: _noteController,
-                  decoration: InputDecoration(
-                    hintText: 'Ders hakkındaki notlarınızı buraya yazın...',
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                      borderSide:
-                          const BorderSide(color: Colors.blue, width: 2),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                  ),
-                  maxLines: 4,
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
+                          // Note Card
+                          _buildModernCard(
+                            animationIndex: 1,
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              ColorConstants.SECONDARY_COLOR,
+                                              ColorConstants.ACCENT_COLOR,
+                                            ],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: const Icon(
+                                          Icons.edit_note,
+                                          color: ColorConstants.WHITE,
+                                          size: 24,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      const Text(
+                                        'Not Al',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: ColorConstants.TEXT_COLOR,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TextField(
+                                    controller: _noteController,
+                                    decoration: InputDecoration(
+                                      hintText:
+                                          'Ders hakkındaki notlarınızı buraya yazın...',
+                                      hintStyle:
+                                          TextStyle(color: Colors.grey[400]),
+                                      prefixIcon: Container(
+                                        margin: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: ColorConstants.MAINCOLOR
+                                              .withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: const Icon(
+                                          Icons.edit,
+                                          color: ColorConstants.MAINCOLOR,
+                                        ),
+                                      ),
+                                      filled: true,
+                                      fillColor: Colors.grey[50],
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        borderSide: BorderSide(
+                                          color: Colors.grey[200]!,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        borderSide: BorderSide(
+                                          color: ColorConstants.MAINCOLOR,
+                                          width: 2,
+                                        ),
+                                      ),
+                                    ),
+                                    maxLines: 4,
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
 
-              _buildModernCard(
-                title: 'Soru Sor',
-                icon: Icons.help_outline,
-                child: TextField(
-                  controller: _questionController,
-                  decoration: InputDecoration(
-                    hintText: 'Ders ile ilgili sorularınızı buraya yazın...',
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                      borderSide:
-                          const BorderSide(color: Colors.blue, width: 2),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                  ),
-                  maxLines: 4,
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
+                          // Question Card
+                          _buildModernCard(
+                            animationIndex: 2,
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              ColorConstants.ACCENT_COLOR,
+                                              ColorConstants.MAINCOLOR,
+                                            ],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: const Icon(
+                                          Icons.help_outline,
+                                          color: ColorConstants.WHITE,
+                                          size: 24,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      const Text(
+                                        'Soru Sor',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: ColorConstants.TEXT_COLOR,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TextField(
+                                    controller: _questionController,
+                                    decoration: InputDecoration(
+                                      hintText:
+                                          'Ders ile ilgili sorularınızı buraya yazın...',
+                                      hintStyle:
+                                          TextStyle(color: Colors.grey[400]),
+                                      prefixIcon: Container(
+                                        margin: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: ColorConstants.MAINCOLOR
+                                              .withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: const Icon(
+                                          Icons.question_mark,
+                                          color: ColorConstants.MAINCOLOR,
+                                        ),
+                                      ),
+                                      filled: true,
+                                      fillColor: Colors.grey[50],
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        borderSide: BorderSide(
+                                          color: Colors.grey[200]!,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        borderSide: BorderSide(
+                                          color: ColorConstants.MAINCOLOR,
+                                          width: 2,
+                                        ),
+                                      ),
+                                    ),
+                                    maxLines: 4,
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
 
-              Container(
-                width: double.infinity,
-                height: 56,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  gradient: const LinearGradient(
-                    colors: [Colors.blue, Colors.blueAccent],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blue.withOpacity(0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+                          // Save Button
+                          Container(
+                            width: double.infinity,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              gradient: LinearGradient(
+                                colors: [
+                                  ColorConstants.MAINCOLOR,
+                                  ColorConstants.SECONDARY_COLOR,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      ColorConstants.MAINCOLOR.withOpacity(0.3),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                if (_noteController.text.isNotEmpty ||
+                                    _questionController.text.isNotEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: const Row(
+                                        children: [
+                                          Icon(Icons.check_circle,
+                                              color: ColorConstants.WHITE),
+                                          SizedBox(width: 8),
+                                          Text(
+                                              'Not ve soru başarıyla kaydedildi!'),
+                                        ],
+                                      ),
+                                      backgroundColor: Colors.green,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  );
+                                  _noteController.clear();
+                                  _questionController.clear();
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: const Row(
+                                        children: [
+                                          Icon(Icons.info,
+                                              color: ColorConstants.WHITE),
+                                          SizedBox(width: 8),
+                                          Text(
+                                              'Lütfen en az bir alan doldurun'),
+                                        ],
+                                      ),
+                                      backgroundColor: Colors.orange,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: const Text(
+                                'Kaydet',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: ColorConstants.WHITE,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 50),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (_noteController.text.isNotEmpty ||
-                        _questionController.text.isNotEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Row(
-                            children: [
-                              Icon(Icons.check_circle, color: Colors.white),
-                              SizedBox(width: 8),
-                              Text('Not ve soru başarıyla kaydedildi!'),
-                            ],
-                          ),
-                          backgroundColor: Colors.green,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      );
-                      _noteController.clear();
-                      _questionController.clear();
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Row(
-                            children: [
-                              Icon(Icons.info, color: Colors.white),
-                              SizedBox(width: 8),
-                              Text('Lütfen en az bir alan doldurun'),
-                            ],
-                          ),
-                          backgroundColor: Colors.orange,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: const Text(
-                    'Kaydet',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
               ),
-              const SizedBox(height: 24),
             ],
           ),
         ),
