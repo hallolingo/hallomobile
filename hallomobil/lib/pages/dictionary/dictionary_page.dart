@@ -157,17 +157,7 @@ class _DictionaryPageState extends State<DictionaryPage>
 
   // Filtrelenmiş kelime listesi
   List<Map<String, String>> get _filteredWords {
-    if (_searchQuery.isEmpty) {
-      return _wordList;
-    } else {
-      return _wordList.where((word) {
-        final turkceKelime = word['turkce']?.toLowerCase() ?? '';
-        final hedefKelime =
-            word[_getDictionaryKey(_targetLanguage)]?.toLowerCase() ?? '';
-        return turkceKelime.contains(_searchQuery.toLowerCase()) ||
-            hedefKelime.contains(_searchQuery.toLowerCase());
-      }).toList();
-    }
+    return _wordList; // Her zaman tüm kelime listesini döndür
   }
 
   String _getDictionaryKey(String language) {
@@ -537,7 +527,7 @@ class _DictionaryPageState extends State<DictionaryPage>
                 delegate: SliverChildListDelegate(
                   [
                     Padding(
-                      padding: const EdgeInsets.all(20.0),
+                      padding: const EdgeInsets.all(10.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -545,7 +535,7 @@ class _DictionaryPageState extends State<DictionaryPage>
                           _buildModernCard(
                             animationIndex: 0,
                             child: Padding(
-                              padding: const EdgeInsets.all(24),
+                              padding: const EdgeInsets.all(12),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -660,7 +650,7 @@ class _DictionaryPageState extends State<DictionaryPage>
                           _buildModernCard(
                             animationIndex: 1,
                             child: Padding(
-                              padding: const EdgeInsets.all(24),
+                              padding: const EdgeInsets.all(12),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -872,7 +862,7 @@ class _DictionaryPageState extends State<DictionaryPage>
                           _buildModernCard(
                             animationIndex: 2,
                             child: Padding(
-                              padding: const EdgeInsets.all(24),
+                              padding: const EdgeInsets.all(12),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [

@@ -17,6 +17,151 @@ const transporter = nodemailer.createTransport({
     },
 });
 
+export const sendWelcomeEmail = firestore.onDocumentCreated(
+    {
+        document: "users/{userId}",
+        region: "europe-west3",
+    },
+    async (event) => {
+        const userData = event.data?.data();
+        if (!userData) {
+            console.log("User data not found");
+            return;
+        }
+
+        const email = userData.email;
+        const name = userData.name || "Kullanıcı";
+
+        if (!email) {
+            console.log("Email address not found for user:", event.params.userId);
+            return;
+        }
+
+        const logoUrl = 'https://firebasestorage.googleapis.com/v0/b/hallolingo-739a8.firebasestorage.app/o/logos%2FbigLogo.jpeg?alt=media&token=5d75d892-ad61-4983-a5bb-b5c4adc5e776';
+
+        const htmlTemplate = `
+        <!DOCTYPE html>
+        <html lang="tr">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body {
+                    font-family: 'Arial', sans-serif;
+                    background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 0;
+                    color: #333;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #ffffff;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                }
+                .header {
+                    background-color: #4a90e2;
+                    padding: 20px;
+                    text-align: center;
+                }
+                .header img {
+                    max-width: 150px;
+                    height: auto;
+                }
+                .content {
+                    padding: 30px;
+                    text-align: center;
+                }
+                .content h1 {
+                    font-size: 24px;
+                    color: #4a90e2;
+                    margin-bottom: 20px;
+                }
+                .content p {
+                    font-size: 16px;
+                    line-height: 1.5;
+                    color: #555;
+                    margin-bottom: 20px;
+                }
+                .button {
+                    display: inline-block;
+                    padding: 12px 24px;
+                    background-color: #4a90e2;
+                    color: #ffffff;
+                    text-decoration: none;
+                    border-radius: 8px;
+                    font-weight: bold;
+                    margin: 20px 0;
+                }
+                .footer {
+                    background-color: #f4f4f4;
+                    padding: 20px;
+                    text-align: center;
+                    font-size: 14px;
+                    color: #777;
+                }
+                .footer a {
+                    color: #4a90e2;
+                    text-decoration: none;
+                }
+                @media only screen and (max-width: 600px) {
+                    .container {
+                        margin: 10px;
+                    }
+                    .content h1 {
+                        font-size: 20px;
+                    }
+                    .button {
+                        font-size: 14px;
+                        padding: 10px 20px;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <img src="${logoUrl}" alt="Hallolingo Logo">
+                </div>
+                <div class="content">
+                    <h1>Hallolingo'ya Hoş Geldiniz!</h1>
+                    <p>Merhaba ${name},</p>
+                    <p>Hallolingo ailesine katıldığınız için çok heyecanlıyız! Artık Almanca öğrenme yolculuğunuzda size eşlik etmek için buradayız. Eğlenceli, etkileşimli ve etkili öğrenme yöntemlerimizle Almanca'yı kolayca öğrenebileceksiniz.</p>
+                    <p>Hemen başlayarak dil becerilerinizi geliştirmeye ne dersiniz? İlk dersinize başlamak için aşağıdaki butona tıklayın:</p>
+                    <a href="https://hallo.com/start" class="button">Öğrenmeye Başla</a>
+                    <p>Herhangi bir sorunuz varsa, destek ekibimiz size yardımcı olmaktan mutluluk duyar. Öğrenme yolculuğunuzda başarılar dileriz!</p>
+                </div>
+                <div class="footer">
+                    <p>© ${new Date().getFullYear()} Hallolingo. Tüm hakları saklıdır.</p>
+                    <p><a href="https://hallo.com">Bize Ulaşın</a> | <a href="https://hallo.com/privacy">Gizlilik Politikası</a></p>
+                </div>
+            </div>
+        </body>
+        </html>
+        `;
+
+        const mailOptions = {
+            from: 'HALLOLINGO <info@hallo.com>',
+            to: email,
+            subject: 'Hallolingo’ya Hoş Geldiniz! Almanca Öğrenme Yolculuğunuz Başlıyor',
+            html: htmlTemplate,
+        };
+
+        try {
+            await transporter.sendMail(mailOptions);
+            console.log(`Welcome email sent to ${email}`);
+            await logUserActivity(
+                "welcome_email_sent",
+                `Hoş geldiniz e-postası gönderildi: ${name} (${email})`,
+                userData
+            );
+        } catch (error) {
+            console.error(`Error sending welcome email to ${email}:`, error);
+        }
+    }
+);
 // Add this near your other exports
 export const deleteExpiredVerificationCodes = onSchedule(
     { schedule: "every 5 minutes", region: "europe-west3" },
@@ -145,14 +290,13 @@ export const trackLanguageChanges = firestore.onDocumentWritten(
     }
 );
 
-// Grammar işlemleri için trigger
-export const trackGrammarChanges = firestore.onDocumentWritten(
+export const trackWordsChanges = firestore.onDocumentWritten(
     {
-        document: "grammar/{langId}/{level}/exercises/items/{exerciseId}",
+        document: "words/{langId}/{level}/exercises/items/{exerciseId}",
         region: "europe-west3",
     },
     async (event) => {
-        console.log("trackGrammarChanges tetiklendi:", event.params);
+        console.log("trackWordsChanges tetiklendi:", event.params);
         const change = event.data;
         if (!change) {
             console.log("Change verisi yok");
@@ -166,32 +310,29 @@ export const trackGrammarChanges = firestore.onDocumentWritten(
         console.log("LangId:", langId, "Level:", level, "ExerciseId:", exerciseId);
 
         if (!change.after.exists) {
-            // Grammar egzersizi silindi
-            console.log("Grammar egzersizi silindi:", change.before.data());
-            await logGrammarActivity(
-                "grammar_removed",
-                `Grammar egzersizi silindi: ${langId}/${level}/${exerciseId}`,
+            console.log("Words egzersizi silindi:", change.before.data());
+            await logWordsActivity(
+                "words_removed",
+                `Kelime egzersizi silindi: ${langId}/${level}/${exerciseId}`,
                 change.before.data()
             );
         } else if (!change.before.exists) {
-            // Yeni grammar egzersizi eklendi
-            console.log("Yeni grammar egzersizi eklendi:", change.after.data());
-            await logGrammarActivity(
-                "grammar_added",
-                `Yeni grammar egzersizi eklendi: ${langId}/${level}/${exerciseId}`,
+            console.log("Yeni words egzersizi eklendi:", change.after.data());
+            await logWordsActivity(
+                "words_added",
+                `Yeni Kelime egzersizi eklendi: ${langId}/${level}/${exerciseId}`,
                 change.after.data()
             );
         } else {
-            // Grammar egzersizi güncellendi
             const changedFields = getChangedFields(
                 change.before.data(),
                 change.after.data()
             );
             console.log("Değişen alanlar:", changedFields);
             if (changedFields.length > 0) {
-                await logGrammarActivity(
-                    "grammar_updated",
-                    `Grammar egzersizi güncellendi: ${langId}/${level}/${exerciseId} (Değişen alanlar: ${changedFields.join(", ")})`,
+                await logWordsActivity(
+                    "words_updated",
+                    `Kelime egzersizi güncellendi: ${langId}/${level}/${exerciseId} (Değişen alanlar: ${changedFields.join(", ")})`,
                     change.after.data()
                 );
             }
@@ -208,7 +349,7 @@ export const sendVerificationEmail = functions.https.onRequest(
             return;
         }
 
-        const logoUrl = 'https://firebasestorage.googleapis.com/v0/b/hallolingo-2d19c.firebasestorage.app/o/logo%2FlogoTransparant.png?alt=media&token=623c0035-0860-4658-8fd8-37e8b3489011';
+        const logoUrl = 'https://firebasestorage.googleapis.com/v0/b/hallolingo-739a8.firebasestorage.app/o/logos%2FbigLogo.jpeg?alt=media&token=5d75d892-ad61-4983-a5bb-b5c4adc5e776';
 
         const htmlTemplate = `
         <!DOCTYPE html>
@@ -331,7 +472,6 @@ export const sendVerificationEmail = functions.https.onRequest(
     }
 );
 
-
 /**
  * Kullanıcı aktivitelerini kaydeder
  * @param {string} type - Aktivite tipi
@@ -415,13 +555,12 @@ async function logLanguageActivity(
 }
 
 /**
- * Grammar aktivitelerini kaydeder
  * @param {string} type - Aktivite tipi
  * @param {string} description - Aktivite açıklaması
- * @param {admin.firestore.DocumentData | undefined} data - Grammar verisi
+ * @param {admin.firestore.DocumentData | undefined} data 
  * @return {Promise<admin.firestore.DocumentReference>}
  */
-async function logGrammarActivity(
+async function logWordsActivity(
     type: string,
     description: string,
     data: admin.firestore.DocumentData | undefined
@@ -445,16 +584,16 @@ async function logGrammarActivity(
                 imageUrl: data.imageUrl || null,
             };
         } catch (error) {
-            console.error("logGrammarActivity: Metadata oluştururken hata:", error);
+            console.error("logWordsActivity: Metadata oluştururken hata:", error);
         }
     }
 
     try {
         const docRef = await db.collection("activities").add(activityData);
-        console.log("logGrammarActivity: Etkinlik kaydedildi:", docRef.id, activityData);
+        console.log("logWordsActivity: Etkinlik kaydedildi:", docRef.id, activityData);
         return docRef;
     } catch (error) {
-        console.error("logGrammarActivity: Etkinlik kaydedilirken hata:", error);
+        console.error("logWordsActivity: Etkinlik kaydedilirken hata:", error);
         throw error;
     }
 }

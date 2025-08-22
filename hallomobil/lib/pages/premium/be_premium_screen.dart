@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hallomobil/app_router.dart';
 import 'package:hallomobil/constants/color/color_constants.dart';
 import 'package:hallomobil/pages/home/router_page.dart';
 
@@ -461,28 +464,52 @@ class _PremiumPageState extends State<PremiumPage>
                                       ],
                                     ),
                                     child: ElevatedButton(
-                                      onPressed: () {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                            content: const Row(
-                                              children: [
-                                                Icon(Icons.check_circle,
-                                                    color:
-                                                        ColorConstants.WHITE),
-                                                SizedBox(width: 8),
-                                                Text(
-                                                    'Premium abonelik başlatıldı!'),
-                                              ],
+                                      onPressed: () async {
+                                        try {
+                                          final user =
+                                              FirebaseAuth.instance.currentUser;
+                                          if (user != null) {
+                                            await FirebaseFirestore.instance
+                                                .collection('users')
+                                                .doc(user.uid)
+                                                .update({'isPremium': true});
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                content: const Row(
+                                                  children: [
+                                                    Icon(Icons.check_circle,
+                                                        color: ColorConstants
+                                                            .WHITE),
+                                                    SizedBox(width: 8),
+                                                    Text(
+                                                        'Premium abonelik başlatıldı!'),
+                                                  ],
+                                                ),
+                                                backgroundColor: Colors.green,
+                                                behavior:
+                                                    SnackBarBehavior.floating,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
+                                              ),
+                                            );
+                                            // Sayfayı yenile veya VideosPage'e yönlendir
+                                            Navigator.pushReplacementNamed(
+                                                context, AppRouter.videos);
+                                          }
+                                        } catch (e) {
+                                          print(
+                                              'Premium güncellenirken hata oluştu: $e');
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text('Hata oluştu: $e'),
+                                              backgroundColor: Colors.red,
                                             ),
-                                            backgroundColor: Colors.green,
-                                            behavior: SnackBarBehavior.floating,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                            ),
-                                          ),
-                                        );
+                                          );
+                                        }
                                       },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.transparent,

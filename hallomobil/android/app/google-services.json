@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "803159476893",
-    "project_id": "hallolingo-2d19c",
-    "storage_bucket": "hallolingo-2d19c.firebasestorage.app"
+    "project_number": "1018144025658",
+    "project_id": "hallolingo-739a8",
+    "storage_bucket": "hallolingo-739a8.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:803159476893:android:02194f8786872280efe274",
+        "mobilesdk_app_id": "1:1018144025658:android:4eb836e1e2ad09bea21903",
         "android_client_info": {
           "package_name": "com.hallomobile.hallomobil"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyB0YiSgSVTxZVWh6l4GywKk_XjpWCVP68c"
+          "current_key": "AIzaSyA8jE7Ud80fOxpUrKoS7na7PnK3_d4qIXg"
         }
       ],
       "services": {

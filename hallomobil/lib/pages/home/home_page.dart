@@ -5,10 +5,14 @@ import 'package:flutter/services.dart';
 import 'package:hallomobil/constants/color/color_constants.dart';
 import 'package:hallomobil/constants/home/home_constants.dart';
 import 'package:hallomobil/pages/home/dinleme/listening_page.dart';
+import 'package:hallomobil/pages/home/kelime/list_categories_page.dart';
+import 'package:hallomobil/pages/home/konusma/speaking_page.dart';
+import 'package:hallomobil/pages/home/private_lesson_page.dart';
 import 'package:hallomobil/widgets/router/home/app_bar_points.dart';
 import 'package:hallomobil/widgets/router/home/language_level_card.dart';
 import 'package:hallomobil/widgets/router/home/lesson_progress_card.dart';
 import 'package:hallomobil/widgets/router/home/section_title.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   final User? user;
@@ -35,7 +39,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
 
-    // Animation setup - ProfilePage ile aynı
+    // Animation setup
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -59,7 +63,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       curve: Curves.easeOutCubic,
     ));
 
-    // Create staggered animations for cards
     _cardAnimations = List.generate(3, (index) {
       return Tween<double>(begin: 0, end: 1).animate(
         CurvedAnimation(
@@ -77,6 +80,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     Future.delayed(const Duration(milliseconds: 300), () {
       _cardAnimationController.forward();
     });
+
+    // Show dialog on page load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showLessonDialog();
+      _checkAndShowLessonDialog();
+    });
+  }
+
+  Future<void> _checkAndShowLessonDialog() async {
+    final prefs = await SharedPreferences.getInstance();
+    const dialogShownKey = 'lesson_dialog_shown';
+    final bool dialogShown = prefs.getBool(dialogShownKey) ?? false;
+
+    if (!dialogShown) {
+      _showLessonDialog();
+      await prefs.setBool(dialogShownKey, true);
+    }
   }
 
   @override
@@ -124,9 +144,204 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
+  void _showLessonDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.9,
+            decoration: BoxDecoration(
+              color: ColorConstants.MAINCOLOR.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(25),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Stack(
+              children: [
+                // Decorative elements
+                Positioned(
+                  top: -50,
+                  right: -50,
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.1),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: -30,
+                  left: -30,
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.1),
+                    ),
+                  ),
+                ),
+
+                // Main content
+                Padding(
+                  padding: const EdgeInsets.all(25.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(height: 15),
+
+                      // Icon
+                      Container(
+                        padding: const EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.school,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Title
+                      const Text(
+                        'Özel Canlı Almanca Eğitimi',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Description
+                      const Text(
+                        'Profesyonel eğitmenlerle birebir Almanca dersleri alın ve hızla ilerleyin!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          height: 1.4,
+                        ),
+                      ),
+
+                      const SizedBox(height: 25),
+
+                      // Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              style: TextButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(
+                                    color: Colors.white.withOpacity(0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                              ),
+                              child: const Text(
+                                'Daha Sonra',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        PrivateLessonsPage(user: widget.user),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: ColorConstants.MAINCOLOR,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                'Hemen Katıl',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Close button
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Kullanıcının seçili dilini al
     final String selectedLanguage =
         widget.userData?['selectedLanguage'] ?? 'Almanca';
     final languages =
@@ -136,16 +351,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final levelData = languageData['level'] as Map<String, dynamic>? ?? {};
     final skills = levelData['skills'] as Map<String, dynamic>? ?? {};
 
-    // Kullanıcı fotoğraf URL'sini al
     final String? photoUrl =
         widget.user?.photoURL ?? widget.userData?['photoUrl'];
     final String userName =
         widget.user?.displayName ?? widget.userData?['name'] ?? 'Misafir';
     final String initial = userName.isNotEmpty ? userName[0] : 'M';
 
-    // Ders ilerlemelerini seçili dile göre al
     final List<Map<String, dynamic>> lessons = [
-      {'title': 'Gramer', 'progress': skills['grammar']?['progress'] ?? 0.0},
+      {'title': 'Kelime', 'progress': skills['words']?['progress'] ?? 0.0},
       {'title': 'Okuma', 'progress': skills['reading']?['progress'] ?? 0.0},
       {'title': 'Konuşma', 'progress': skills['writing']?['progress'] ?? 0.0},
       {'title': 'Dinleme', 'progress': skills['listening']?['progress'] ?? 0.0},
@@ -159,34 +372,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           position: _slideAnimation,
           child: CustomScrollView(
             slivers: [
-              // Modern Header
               SliverAppBar(
                 expandedHeight: 95,
                 floating: false,
                 pinned: false,
                 backgroundColor: ColorConstants.WHITE,
+                automaticallyImplyLeading: false,
                 flexibleSpace: FlexibleSpaceBar(
                   background: Container(
                     child: SafeArea(
                       child: Padding(
                         padding: const EdgeInsets.only(left: 20),
-                        child: Column(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // App Logo
-
-                            // Profile Picture and Points
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Image.asset(
-                                  HomeConstants.APPBARLOGO,
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.5,
-                                ),
-                                AppBarPoints(
-                                  points: widget.userData?['score'] ?? 0,
-                                ),
-                              ],
+                            Image.asset(
+                              HomeConstants.APPBARLOGO,
+                              width: MediaQuery.of(context).size.width * 0.5,
+                            ),
+                            AppBarPoints(
+                              points: widget.userData?['score'] ?? 0,
                             ),
                           ],
                         ),
@@ -199,15 +404,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   statusBarIconBrightness: Brightness.light,
                 ),
               ),
-              // Content
               SliverList(
                 delegate: SliverChildListDelegate([
                   Padding(
-                    padding: const EdgeInsets.all(20.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Language Level Card
                         _buildModernCard(
                           animationIndex: 0,
                           child: LanguageLevelCard(
@@ -218,7 +421,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             progress: levelData['progress'] ?? 0.0,
                           ),
                         ),
-                        // Lesson Progress Card
                         _buildModernCard(
                           animationIndex: 1,
                           child: Padding(
@@ -283,7 +485,34 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                                 ),
                                               );
                                             }
-                                          : null,
+                                          : lesson['title'] == 'Konuşma'
+                                              ? () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          SpeakingPage(
+                                                        selectedLanguage:
+                                                            selectedLanguage,
+                                                      ),
+                                                    ),
+                                                  );
+                                                }
+                                              : lesson['title'] == 'Kelime'
+                                                  ? () {
+                                                      Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              WordCategoriesPage(
+                                                            selectedLanguage:
+                                                                selectedLanguage,
+                                                            user: widget.user,
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }
+                                                  : null,
                                     );
                                   }).toList(),
                                 ),
@@ -291,7 +520,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             ),
                           ),
                         ),
-                        // Leaderboard Card
                         _buildModernCard(
                           animationIndex: 2,
                           child: Padding(

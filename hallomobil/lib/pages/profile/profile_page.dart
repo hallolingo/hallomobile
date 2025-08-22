@@ -772,7 +772,7 @@ class _ProfilePageState extends State<ProfilePage>
               SliverList(
                 delegate: SliverChildListDelegate([
                   Padding(
-                    padding: const EdgeInsets.all(20.0),
+                    padding: const EdgeInsets.all(10.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -780,7 +780,7 @@ class _ProfilePageState extends State<ProfilePage>
                         _buildModernCard(
                           animationIndex: 0,
                           child: Padding(
-                            padding: const EdgeInsets.all(24),
+                            padding: const EdgeInsets.all(12),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -898,7 +898,7 @@ class _ProfilePageState extends State<ProfilePage>
                         _buildModernCard(
                           animationIndex: 1,
                           child: Padding(
-                            padding: const EdgeInsets.all(24),
+                            padding: const EdgeInsets.all(12),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -1054,7 +1054,7 @@ class _ProfilePageState extends State<ProfilePage>
                         _buildModernCard(
                           animationIndex: 2,
                           child: Padding(
-                            padding: const EdgeInsets.all(24),
+                            padding: const EdgeInsets.all(12),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [

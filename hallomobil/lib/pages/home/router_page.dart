@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hallomobil/constants/color/color_constants.dart';
 import 'package:hallomobil/pages/dictionary/dictionary_page.dart';
+import 'package:hallomobil/pages/home/education_page.dart';
 import 'package:hallomobil/pages/home/home_page.dart';
 import 'package:hallomobil/pages/profile/profile_page.dart';
 import 'package:hallomobil/pages/translate/translate_page.dart';
@@ -50,7 +51,7 @@ class _RouterPageState extends State<RouterPage> {
     const HomePage(),
     const TranslationPage(),
     const DictionaryPage(),
-    const VideosPage(),
+    const EducationPage(),
     const ProfilePage(),
   ];
 

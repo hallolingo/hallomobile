@@ -50,19 +50,20 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyB0YiSgSVTxZVWh6l4GywKk_XjpWCVP68c',
-    appId: '1:803159476893:android:02194f8786872280efe274',
-    messagingSenderId: '803159476893',
-    projectId: 'hallolingo-2d19c',
-    storageBucket: 'hallolingo-2d19c.firebasestorage.app',
+    apiKey: 'AIzaSyA8jE7Ud80fOxpUrKoS7na7PnK3_d4qIXg',
+    appId: '1:1018144025658:android:4eb836e1e2ad09bea21903',
+    messagingSenderId: '1018144025658',
+    projectId: 'hallolingo-739a8',
+    storageBucket: 'hallolingo-739a8.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCGHMughzG6thtw0Ou4cTfh2Qtw-Ne5Ut8',
-    appId: '1:803159476893:ios:c8cdefe068c480c1efe274',
-    messagingSenderId: '803159476893',
-    projectId: 'hallolingo-2d19c',
-    storageBucket: 'hallolingo-2d19c.firebasestorage.app',
+    apiKey: 'AIzaSyC3ikfNP82me-Zx3_33NUXsolspmhlu-X4',
+    appId: '1:1018144025658:ios:2e89ccebd3d8ff1fa21903',
+    messagingSenderId: '1018144025658',
+    projectId: 'hallolingo-739a8',
+    storageBucket: 'hallolingo-739a8.firebasestorage.app',
     iosBundleId: 'com.hallomobile.hallomobil',
   );
+
 }

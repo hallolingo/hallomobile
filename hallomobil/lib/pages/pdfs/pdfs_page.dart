@@ -1,43 +1,42 @@
 import 'dart:async';
-
-import 'package:chewie/chewie.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:hallomobil/app_router.dart';
 import 'package:hallomobil/constants/color/color_constants.dart';
-import 'package:hallomobil/data/models/video_model.dart';
-import 'package:http/http.dart' as http;
-import 'package:video_player/video_player.dart';
+import 'package:hallomobil/data/models/pdf_model.dart';
 import 'package:country_flags/country_flags.dart';
+import 'package:hallomobil/pages/pdfs/pdfs_detail_page.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
 
-class VideosPage extends StatefulWidget {
-  const VideosPage({super.key});
+class PdfsPage extends StatefulWidget {
+  const PdfsPage({super.key});
 
   @override
-  State<VideosPage> createState() => _VideosPageState();
+  State<PdfsPage> createState() => _PdfsPageState();
 }
 
-class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
+class _PdfsPageState extends State<PdfsPage> with TickerProviderStateMixin {
   List<Map<String, String?>> _languages = [];
-  Map<String, bool> _isInitializing = {};
   Timer? _debounceTimer;
   late ScrollController _scrollController;
   String? _selectedLanguage;
-  Map<String, VideoPlayerController?> _controllers = {};
-  Map<String, String?> _videoErrors = {};
+  Map<String, File?> _pdfFiles = {};
+  Map<String, String?> _pdfErrors = {};
   bool _isDisposed = false;
   bool? _isPremium;
   bool _isLoadingPremiumStatus = true;
   bool _premiumCheckCompleted = false;
-  Map<String, ChewieController?> _chewieControllers = {};
-  bool _isLoadingVideos = false;
+  bool _isLoadingPdfs = false;
   int _currentPage = 0;
-  final int _videosPerPage = 10;
-  bool _hasMoreVideos = true;
+  final int _pdfsPerPage = 10;
+  bool _hasMorePdfs = true;
   bool _isLoadingMore = false;
-  List<Video> _loadedVideos = [];
+  List<Pdf> _loadedPdfs = [];
   DocumentSnapshot? _lastDocument;
   late AnimationController _animationController;
   late AnimationController _cardAnimationController;
@@ -104,48 +103,44 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
       if (_scrollController.position.pixels >=
               _scrollController.position.maxScrollExtent - 200 &&
           !_isLoadingMore &&
-          _hasMoreVideos) {
-        _loadMoreVideos();
+          _hasMorePdfs) {
+        _loadMorePdfs();
       }
-      _disposeInvisibleControllers();
     });
   }
 
-  Future<bool> _isVideoUrlValid(String url) async {
+  Future<bool> _isPdfUrlValid(String url) async {
     try {
-      // URL temizliği
-      final cleanUrl = _cleanVideoUrl(url);
-      print('Kontrol edilen URL: $cleanUrl');
-
-      final response = await http
-          .head(Uri.parse(cleanUrl))
-          .timeout(const Duration(seconds: 15));
-
-      print('HTTP Response Status: ${response.statusCode}');
+      final response =
+          await http.head(Uri.parse(url)).timeout(const Duration(seconds: 15));
       return response.statusCode == 200;
     } catch (e) {
-      print('URL doğrulama hatası: $e');
+      print('PDF URL doğrulama hatası: $e');
       return false;
     }
   }
 
-  String _cleanVideoUrl(String url) {
-    // Firebase Storage URL'sini düzeltme - daha kapsamlı temizlik
-    return url
-        .replaceAll('firebasesforage', 'firebasestorage')
-        .replaceAll('firebasestongeg.app', 'appspot.com')
-        .replaceAll('mp47alt', 'mp4?alt=media')
-        .replaceAll('mp42alt', 'mp4?alt=media')
-        .replaceAll(
-            'irebasestongegecogleapis.com', 'firebasestorage.googleapis.com')
-        .replaceAll(' ', '%20') // Space karakterlerini encode et
-        .trim();
+  Future<File?> _downloadPdf(String url, String pdfId) async {
+    try {
+      final response =
+          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 30));
+      if (response.statusCode == 200) {
+        final tempDir = await getTemporaryDirectory();
+        final file = File('${tempDir.path}/$pdfId.pdf');
+        await file.writeAsBytes(response.bodyBytes);
+        return file;
+      }
+      return null;
+    } catch (e) {
+      print('PDF indirme hatası: $e');
+      return null;
+    }
   }
 
-  Future<void> _loadMoreVideos() async {
+  Future<void> _loadMorePdfs() async {
     if (_isDisposed ||
         !mounted ||
-        !_hasMoreVideos ||
+        !_hasMorePdfs ||
         _isLoadingMore ||
         _lastDocument == null) return;
 
@@ -155,45 +150,42 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
 
     try {
       Query query = FirebaseFirestore.instance
-          .collection('videos')
+          .collection('pdfs')
           .where('language', isEqualTo: _selectedLanguage)
-          .orderBy('key')
-          .startAfterDocument(_lastDocument!)
-          .limit(_videosPerPage);
+          .limit(_pdfsPerPage)
+          .startAfterDocument(_lastDocument!);
 
       final snapshot = await query.get();
 
       if (snapshot.docs.isEmpty) {
         setState(() {
-          _hasMoreVideos = false;
+          _hasMorePdfs = false;
           _isLoadingMore = false;
         });
         return;
       }
 
-      final newVideos = snapshot.docs.map((doc) {
-        // Video.fromMap kullan, fromJson değil
-        final data = doc.data() as Map<String, dynamic>;
-        return Video.fromMap(data, doc.id);
-      }).toList();
+      final newPdfs = snapshot.docs
+          .map((doc) => Pdf.fromMap(doc.id, doc.data() as Map<String, dynamic>))
+          .toList();
 
-      // Initialize new video controllers
-      for (final video in newVideos) {
-        final videoId = video.id ?? '${video.language}_${video.key}';
-        if (!_controllers.containsKey(videoId)) {
-          await _initializeVideoController(videoId, video);
+      for (final pdf in newPdfs) {
+        final pdfId = pdf.id ??
+            '${pdf.language}_${DateTime.now().millisecondsSinceEpoch}';
+        if (!_pdfFiles.containsKey(pdfId)) {
+          await _initializePdfFile(pdfId, pdf);
         }
       }
 
       if (!_isDisposed && mounted) {
         setState(() {
-          _loadedVideos.addAll(newVideos);
+          _loadedPdfs.addAll(newPdfs);
           _lastDocument = snapshot.docs.last;
           _isLoadingMore = false;
         });
       }
     } catch (e) {
-      print('Daha fazla video yüklenirken hata: $e');
+      print('Daha fazla PDF yüklenirken hata: $e');
       if (!_isDisposed && mounted) {
         setState(() {
           _isLoadingMore = false;
@@ -209,8 +201,6 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
     _scrollController.dispose();
     _animationController.dispose();
     _cardAnimationController.dispose();
-    _controllers.forEach((key, controller) => controller?.dispose());
-    _chewieControllers.forEach((key, controller) => controller?.dispose());
     super.dispose();
   }
 
@@ -281,7 +271,7 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  Icons.video_library_outlined,
+                  Icons.picture_as_pdf_outlined,
                   size: 80,
                   color: Colors.grey[400],
                 ),
@@ -296,7 +286,7 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Video dersleri premium üyelere özel bir özelliktir. Premium üyelik satın alarak tüm video derslerine erişebilirsiniz.',
+                  'PDF dersleri premium üyelere özel bir özelliktir. Premium üyelik satın alarak tüm PDF derslerine erişebilirsiniz.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
@@ -364,7 +354,7 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
     if (_isDisposed || !mounted) return;
 
     setState(() {
-      _isLoadingVideos = true;
+      _isLoadingPdfs = true;
     });
 
     try {
@@ -382,9 +372,9 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
 
           if (_languages.isNotEmpty) {
             _selectedLanguage = _languages.first['name'];
-            _loadVideosForSelectedLanguage();
+            _loadPdfsForSelectedLanguage();
           } else {
-            _isLoadingVideos = false;
+            _isLoadingPdfs = false;
           }
         });
       }
@@ -392,105 +382,107 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
       print('Diller çekilirken hata oluştu: $e');
       if (!_isDisposed && mounted) {
         setState(() {
-          _isLoadingVideos = false;
+          _isLoadingPdfs = false;
         });
       }
     }
   }
 
-  void _disposeInvisibleControllers() {
-    final visibleVideoIds = _loadedVideos
-        .asMap()
-        .entries
-        .where((entry) =>
-            entry.key >= _scrollController.offset ~/ 200 - 5 &&
-            entry.key <= _scrollController.offset ~/ 200 + 5)
-        .map((entry) =>
-            entry.value.id ?? '${entry.value.language}_${entry.value.key}')
-        .toSet();
-
-    _controllers.keys.toList().forEach((videoId) {
-      if (!visibleVideoIds.contains(videoId)) {
-        if (_controllers[videoId]?.value.isInitialized == false) return;
-        print('Dispose ediliyor: $videoId');
-        _controllers[videoId]?.dispose();
-        _chewieControllers[videoId]?.dispose();
-        _controllers.remove(videoId);
-        _chewieControllers.remove(videoId);
-      }
-    });
-  }
-
-  Future<void> _loadVideosForSelectedLanguage() async {
+  Future<void> _loadPdfsForSelectedLanguage() async {
     if (_selectedLanguage == null || _isDisposed || !mounted) return;
 
     setState(() {
-      _isLoadingVideos = true;
-      _loadedVideos.clear();
+      _isLoadingPdfs = true;
+      _loadedPdfs.clear();
       _lastDocument = null;
       _currentPage = 0;
-      _hasMoreVideos = true;
-
-      // Clear existing controllers
-      _controllers.forEach((key, controller) => controller?.dispose());
-      _chewieControllers.forEach((key, controller) => controller?.dispose());
-      _controllers.clear();
-      _chewieControllers.clear();
-      _videoErrors.clear();
+      _hasMorePdfs = true;
+      _pdfFiles.clear();
+      _pdfErrors.clear();
     });
 
     try {
       Query query = FirebaseFirestore.instance
-          .collection('videos')
+          .collection('pdfs')
           .where('language', isEqualTo: _selectedLanguage)
-          .orderBy('key')
-          .limit(_videosPerPage);
+          .limit(_pdfsPerPage);
 
       final snapshot = await query.get();
 
       if (snapshot.docs.isEmpty) {
         setState(() {
-          _isLoadingVideos = false;
-          _hasMoreVideos = false;
+          _isLoadingPdfs = false;
+          _hasMorePdfs = false;
         });
         return;
       }
 
-      final videos = snapshot.docs.map((doc) {
-        // Video.fromMap kullan
-        final data = doc.data() as Map<String, dynamic>;
-        return Video.fromMap(data, doc.id);
-      }).toList();
+      final pdfs = snapshot.docs
+          .map((doc) => Pdf.fromMap(doc.id, doc.data() as Map<String, dynamic>))
+          .toList();
 
-      if (videos.length < _videosPerPage) {
-        _hasMoreVideos = false;
+      if (pdfs.length < _pdfsPerPage) {
+        _hasMorePdfs = false;
       }
 
       if (snapshot.docs.isNotEmpty) {
         _lastDocument = snapshot.docs.last;
       }
 
-      // Initialize video controllers
-      for (final video in videos) {
-        final videoId = video.id ?? '${video.language}_${video.key}';
-        if (!_controllers.containsKey(videoId) &&
-            !_videoErrors.containsKey(videoId)) {
-          await _initializeVideoController(videoId, video);
+      for (final pdf in pdfs) {
+        final pdfId = pdf.id ??
+            '${pdf.language}_${DateTime.now().millisecondsSinceEpoch}';
+        if (!_pdfFiles.containsKey(pdfId)) {
+          await _initializePdfFile(pdfId, pdf);
         }
       }
 
       if (!_isDisposed && mounted) {
         setState(() {
-          _loadedVideos = videos;
-          _isLoadingVideos = false;
+          _loadedPdfs = pdfs;
+          _isLoadingPdfs = false;
         });
       }
     } catch (e) {
-      print('Videolar yüklenirken hata oluştu: $e');
+      print('PDFler yüklenirken hata oluştu: $e');
       if (!_isDisposed && mounted) {
         setState(() {
-          _isLoadingVideos = false;
-          _hasMoreVideos = false;
+          _isLoadingPdfs = false;
+          _hasMorePdfs = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _initializePdfFile(String pdfId, Pdf pdf) async {
+    if (_isDisposed || !mounted) return;
+
+    try {
+      if (!(await _isPdfUrlValid(pdf.pdfUrl))) {
+        if (!_isDisposed && mounted) {
+          setState(() {
+            _pdfErrors[pdfId] = 'PDF URL geçersiz veya erişilemez';
+          });
+        }
+        return;
+      }
+
+      final file = await _downloadPdf(pdf.pdfUrl, pdfId);
+      if (file != null && !_isDisposed && mounted) {
+        setState(() {
+          _pdfFiles[pdfId] = file;
+          _pdfErrors.remove(pdfId);
+        });
+      } else {
+        setState(() {
+          _pdfErrors[pdfId] = 'PDF dosyası indirilemedi';
+        });
+      }
+    } catch (e) {
+      print('PDF yüklenirken hata (ID: $pdfId): $e');
+      if (!_isDisposed && mounted) {
+        setState(() {
+          _pdfErrors[pdfId] = 'PDF yüklenemedi: ${e.toString()}';
         });
       }
     }
@@ -503,11 +495,9 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Ana loading animasyonu
             Stack(
               alignment: Alignment.center,
               children: [
-                // Dış çember - dönen halka
                 SizedBox(
                   width: 120,
                   height: 120,
@@ -517,8 +507,6 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                         ColorConstants.MAINCOLOR.withOpacity(0.3)),
                   ),
                 ),
-
-                // İç çember - counter dönen
                 SizedBox(
                   width: 80,
                   height: 80,
@@ -528,8 +516,6 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                         AlwaysStoppedAnimation(ColorConstants.MAINCOLOR),
                   ),
                 ),
-
-                // Merkez ikon
                 Container(
                   width: 50,
                   height: 50,
@@ -545,28 +531,23 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                     ],
                   ),
                   child: Icon(
-                    Icons.video_library,
+                    Icons.picture_as_pdf,
                     color: ColorConstants.MAINCOLOR,
                     size: 24,
                   ),
                 ),
               ],
             ),
-
             const SizedBox(height: 40),
-
-            // Loading text
             Text(
-              'Videolar Yükleniyor...',
+              'PDFler Yükleniyor...',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: ColorConstants.TEXT_COLOR,
               ),
             ),
-
             const SizedBox(height: 12),
-
             Text(
               'Deutsch lernen macht Spaß! 🇩🇪',
               style: TextStyle(
@@ -575,15 +556,11 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                 fontStyle: FontStyle.italic,
               ),
             ),
-
             const SizedBox(height: 30),
-
-            // Animasyonlu kelimeler
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 40),
               child: Column(
                 children: [
-                  // Almanca kelimelerin geçişi
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 800),
                     child: Text(
@@ -596,9 +573,7 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 8),
-
                   Text(
                     _getRandomGermanWordTranslation(),
                     style: TextStyle(
@@ -609,10 +584,7 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                 ],
               ),
             ),
-
             const SizedBox(height: 50),
-
-            // Progress dots
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(3, (index) {
@@ -668,141 +640,16 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
         translations.length];
   }
 
-  // Video controller'ı başlatma metodunu güncelle
-  Future<void> _initializeVideoController(String videoId, Video video) async {
-    if (_isDisposed || !mounted || _isInitializing[videoId] == true) return;
-
-    // Firestore'dan gelen videoUrl'i kullan
-    final videoUrl = _cleanVideoUrl(video.videoUrl);
-
-    print('Video başlatılıyor - ID: $videoId, URL: $videoUrl');
-
-    if (!(await _isVideoUrlValid(videoUrl))) {
-      if (!_isDisposed && mounted) {
-        setState(() {
-          _videoErrors[videoId] = 'Video URL geçersiz veya erişilemez';
-        });
-      }
-      return;
-    }
-
-    _isInitializing[videoId] = true;
-
-    try {
-      final controller = VideoPlayerController.network(
-        videoUrl,
-        httpHeaders: {
-          'Cache-Control': 'max-age=86400',
-          'User-Agent': 'Flutter App',
-        },
-      );
-
-      controller.addListener(() {
-        if (controller.value.hasError) {
-          final error = controller.value.errorDescription;
-          print('Video Player Error: $error');
-          if (!_isDisposed && mounted) {
-            setState(() {
-              _videoErrors[videoId] =
-                  'Video oynatıcı hatası: ${_simplifyErrorMessage(error)}';
-            });
-          }
-        }
-      });
-
-      await controller.initialize().timeout(const Duration(seconds: 15));
-
-      if (!_isDisposed && mounted) {
-        final chewieController = ChewieController(
-          videoPlayerController: controller,
-          autoPlay: false,
-          looping: false,
-          aspectRatio: controller.value.aspectRatio,
-          errorBuilder: (context, errorMessage) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.red, size: 50),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Video oynatılamadı',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: ColorConstants.TEXT_COLOR,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    _simplifyErrorMessage(errorMessage),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-          additionalOptions: (context) => [
-            OptionItem(
-              onTap: (BuildContext ctx) {
-                if (!_isDisposed && mounted) {
-                  setState(() {
-                    _videoErrors.remove(videoId);
-                  });
-                  _initializeVideoController(videoId, video);
-                }
-              },
-              iconData: Icons.refresh,
-              title: 'Yeniden Dene',
-            ),
-          ],
-        );
-
-        setState(() {
-          _controllers[videoId] = controller;
-          _chewieControllers[videoId] = chewieController;
-          _videoErrors.remove(videoId);
-        });
-      }
-    } catch (e) {
-      print('Video yüklenirken hata (ID: $videoId): $e');
-      if (!_isDisposed && mounted) {
-        setState(() {
-          _videoErrors[videoId] =
-              'Video yüklenemedi: ${_simplifyErrorMessage(e.toString())}';
-        });
-      }
-    } finally {
-      _isInitializing[videoId] = false;
-    }
-  }
-
-  String _simplifyErrorMessage(String? error) {
-    if (error == null) return 'Bilinmeyen hata';
-
-    if (error.contains('MediaCodecVideoRenderer')) {
-      return 'Cihaz bu video formatını desteklemiyor';
-    } else if (error.contains('ExoPlaybackException')) {
-      return 'Video oynatıcı hatası';
-    } else if (error.contains('timeout')) {
-      return 'Video yükleme zaman aşımına uğradı';
-    }
-
-    return error.length > 100 ? '${error.substring(0, 100)}...' : error;
-  }
-
-  void _navigateToVideoDetail(Video video, ChewieController controller) {
+  void _navigateToPdfDetail(Pdf pdf, File pdfFile) {
     if (!_isDisposed && mounted) {
-      Navigator.pushNamed(
+      Navigator.push(
         context,
-        AppRouter.videoDetail,
-        arguments: {
-          'video': video,
-          'controller': controller,
-        },
+        MaterialPageRoute(
+          builder: (context) => PdfDetailPage(
+            pdf: pdf,
+            pdfFile: pdfFile,
+          ),
+        ),
       );
     }
   }
@@ -854,7 +701,6 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
       ),
       child: Column(
         children: [
-          // Handle bar
           Container(
             width: 40,
             height: 4,
@@ -864,8 +710,6 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-
-          // Header
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Row(
@@ -900,10 +744,7 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
               ],
             ),
           ),
-
           const Divider(height: 1),
-
-          // Languages list
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -922,20 +763,12 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                       onTap: () {
                         setState(() {
                           _selectedLanguage = language['name'];
-                          _isLoadingVideos = true;
-                          // Controller'ları temizle
-                          _controllers.forEach((key, controller) {
-                            controller?.dispose();
-                          });
-                          _chewieControllers.forEach((key, controller) {
-                            controller?.dispose();
-                          });
-                          _controllers.clear();
-                          _chewieControllers.clear();
-                          _videoErrors.clear();
+                          _isLoadingPdfs = true;
+                          _pdfFiles.clear();
+                          _pdfErrors.clear();
                         });
                         Navigator.pop(context);
-                        _loadVideosForSelectedLanguage();
+                        _loadPdfsForSelectedLanguage();
                       },
                       child: Container(
                         padding: const EdgeInsets.all(16),
@@ -1031,7 +864,7 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
       return _buildNonPremiumMessage();
     }
 
-    if (_isLoadingVideos) {
+    if (_isLoadingPdfs) {
       return _buildGermanLearningLoading();
     }
 
@@ -1042,7 +875,6 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
         child: SlideTransition(
           position: _slideAnimation,
           child: CustomScrollView(controller: _scrollController, slivers: [
-            // Modern Header - DictionaryPage tarzında
             SliverAppBar(
               expandedHeight: 160,
               floating: false,
@@ -1059,7 +891,7 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Hero(
-                            tag: 'videos_icon',
+                            tag: 'pdfs_icon',
                             child: Container(
                               width: 60,
                               height: 60,
@@ -1075,16 +907,15 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                                 ],
                               ),
                               child: Icon(
-                                Icons.video_library,
+                                Icons.picture_as_pdf,
                                 size: 30,
                                 color: ColorConstants.MAINCOLOR,
                               ),
                             ),
                           ),
                           const SizedBox(height: 6),
-                          // Title
                           const Text(
-                            'Ders Videoları',
+                            'Ders PDFleri',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -1092,9 +923,8 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          // Subtitle
                           Text(
-                            'Dil öğrenme videolarını keşfedin',
+                            'Dil öğrenme PDFlerini keşfedin',
                             style: TextStyle(
                               fontSize: 14,
                               color: ColorConstants.WHITE.withOpacity(0.8),
@@ -1112,7 +942,6 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                 statusBarIconBrightness: Brightness.light,
               ),
             ),
-            // Content
             SliverList(
               delegate: SliverChildListDelegate([
                 Padding(
@@ -1120,7 +949,6 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Language Selection Card
                       _buildModernCard(
                         animationIndex: 0,
                         child: Padding(
@@ -1263,8 +1091,6 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                           ),
                         ),
                       ),
-
-                      // Video List Card
                       _buildModernCard(
                         animationIndex: 1,
                         child: Padding(
@@ -1288,14 +1114,14 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: const Icon(
-                                      Icons.video_library,
+                                      Icons.picture_as_pdf,
                                       color: ColorConstants.WHITE,
                                       size: 24,
                                     ),
                                   ),
                                   const SizedBox(width: 16),
                                   const Text(
-                                    'Video Dersleri',
+                                    'PDF Dersleri',
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -1320,7 +1146,7 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                                         ),
                                       ),
                                     )
-                                  : _loadedVideos.isEmpty
+                                  : _loadedPdfs.isEmpty
                                       ? Container(
                                           padding: const EdgeInsets.all(16),
                                           decoration: BoxDecoration(
@@ -1329,7 +1155,7 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                                                 BorderRadius.circular(12),
                                           ),
                                           child: const Text(
-                                            'Bu dilde video bulunamadı',
+                                            'Bu dilde PDF bulunamadı',
                                             style: TextStyle(
                                               fontSize: 16,
                                               color: Colors.grey,
@@ -1340,10 +1166,10 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                                           shrinkWrap: true,
                                           physics:
                                               const NeverScrollableScrollPhysics(),
-                                          itemCount: _loadedVideos.length +
+                                          itemCount: _loadedPdfs.length +
                                               (_isLoadingMore ? 1 : 0),
                                           itemBuilder: (context, index) {
-                                            if (index == _loadedVideos.length &&
+                                            if (index == _loadedPdfs.length &&
                                                 _isLoadingMore) {
                                               return const Center(
                                                 child: Padding(
@@ -1354,13 +1180,12 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                                               );
                                             }
 
-                                            final video = _loadedVideos[index];
-                                            final videoId = video.id ??
-                                                '${video.language}_${video.key}';
-                                            final chewieController =
-                                                _chewieControllers[videoId];
+                                            final pdf = _loadedPdfs[index];
+                                            final pdfId = pdf.id ??
+                                                '${pdf.language}_${DateTime.now().millisecondsSinceEpoch}';
+                                            final pdfFile = _pdfFiles[pdfId];
                                             final errorMessage =
-                                                _videoErrors[videoId];
+                                                _pdfErrors[pdfId];
 
                                             return Padding(
                                               padding: const EdgeInsets.only(
@@ -1369,13 +1194,10 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                                                 child: Material(
                                                   color: Colors.transparent,
                                                   child: InkWell(
-                                                    onTap: chewieController !=
-                                                            null
+                                                    onTap: pdfFile != null
                                                         ? () =>
-                                                            _navigateToVideoDetail(
-                                                              video,
-                                                              chewieController,
-                                                            )
+                                                            _navigateToPdfDetail(
+                                                                pdf, pdfFile)
                                                         : null,
                                                     child: Column(
                                                       crossAxisAlignment:
@@ -1387,20 +1209,48 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                                                               MainAxisAlignment
                                                                   .spaceBetween,
                                                           children: [
-                                                            Text(
-                                                              'Ders ${video.key}',
-                                                              style:
-                                                                  const TextStyle(
-                                                                fontSize: 18,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                color: ColorConstants
-                                                                    .TEXT_COLOR,
+                                                            Expanded(
+                                                              child: Column(
+                                                                crossAxisAlignment:
+                                                                    CrossAxisAlignment
+                                                                        .start,
+                                                                children: [
+                                                                  Text(
+                                                                    pdf.name.isNotEmpty
+                                                                        ? pdf
+                                                                            .name
+                                                                        : pdf
+                                                                            .language,
+                                                                    style:
+                                                                        const TextStyle(
+                                                                      fontSize:
+                                                                          18,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                      color: ColorConstants
+                                                                          .TEXT_COLOR,
+                                                                    ),
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                  ),
+                                                                  Text(
+                                                                    pdf.language,
+                                                                    style:
+                                                                        TextStyle(
+                                                                      fontSize:
+                                                                          14,
+                                                                      color: ColorConstants
+                                                                          .TEXT_COLOR
+                                                                          .withOpacity(
+                                                                              0.6),
+                                                                    ),
+                                                                  ),
+                                                                ],
                                                               ),
                                                             ),
-                                                            if (chewieController !=
-                                                                null)
+                                                            if (pdfFile != null)
                                                               Container(
                                                                 padding:
                                                                     const EdgeInsets
@@ -1489,13 +1339,13 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                                                                       () {
                                                                     setState(
                                                                         () {
-                                                                      _videoErrors
+                                                                      _pdfErrors
                                                                           .remove(
-                                                                              videoId);
+                                                                              pdfId);
                                                                     });
-                                                                    _initializeVideoController(
-                                                                        videoId,
-                                                                        video);
+                                                                    _initializePdfFile(
+                                                                        pdfId,
+                                                                        pdf);
                                                                   },
                                                                   icon: const Icon(
                                                                       Icons
@@ -1524,7 +1374,7 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                                                               ],
                                                             ),
                                                           )
-                                                        else if (chewieController !=
+                                                        else if (pdfFile !=
                                                             null)
                                                           Container(
                                                             decoration:
@@ -1553,9 +1403,31 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                                                                           12),
                                                               child: SizedBox(
                                                                 height: 200,
-                                                                child: Chewie(
-                                                                  controller:
-                                                                      chewieController,
+                                                                child: PDFView(
+                                                                  filePath:
+                                                                      pdfFile
+                                                                          .path,
+                                                                  autoSpacing:
+                                                                      true,
+                                                                  enableSwipe:
+                                                                      false,
+                                                                  swipeHorizontal:
+                                                                      true,
+                                                                  pageFling:
+                                                                      false,
+                                                                  onError:
+                                                                      (error) {
+                                                                    setState(
+                                                                        () {
+                                                                      _pdfErrors[
+                                                                              pdfId] =
+                                                                          'PDF görüntülenemedi: $error';
+                                                                    });
+                                                                  },
+                                                                  onRender:
+                                                                      (_pages) {
+                                                                    // PDF rendered
+                                                                  },
                                                                 ),
                                                               ),
                                                             ),
@@ -1587,7 +1459,7 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                                                                       height:
                                                                           8),
                                                                   Text(
-                                                                    'Video yükleniyor...',
+                                                                    'PDF yükleniyor...',
                                                                     style:
                                                                         TextStyle(
                                                                       color: Colors
@@ -1608,7 +1480,7 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                                             );
                                           },
                                         ),
-                              if (!_hasMoreVideos && _loadedVideos.isNotEmpty)
+                              if (!_hasMorePdfs && _loadedPdfs.isNotEmpty)
                                 Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
@@ -1625,7 +1497,7 @@ class _VideosPageState extends State<VideosPage> with TickerProviderStateMixin {
                                       ),
                                       const SizedBox(width: 8),
                                       const Text(
-                                        'Tüm videolar yüklendi',
+                                        'Tüm PDFler yüklendi',
                                         style: TextStyle(
                                           fontSize: 16,
                                           color: Colors.grey,

@@ -23,7 +23,7 @@ class EmailAuthService {
 
       // Firebase Function'ını çağır
       final functionUrl =
-          'https://europe-west3-hallolingo-2d19c.cloudfunctions.net/sendVerificationEmail';
+          'https://europe-west3-hallolingo-739a8.cloudfunctions.net/sendVerificationEmail';
       final response = await httpClient.post(
         Uri.parse(functionUrl),
         headers: {'Content-Type': 'application/json'},

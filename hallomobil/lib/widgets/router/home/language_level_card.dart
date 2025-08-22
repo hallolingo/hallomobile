@@ -72,7 +72,7 @@ class LanguageLevelCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$language Seviyeniz',
+                      '$language',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

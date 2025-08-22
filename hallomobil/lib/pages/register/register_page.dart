@@ -149,7 +149,7 @@ class _RegisterPageState extends State<RegisterPage>
                                       ),
                                       child: Image.network(
                                         RegisterConstants.REGISTERLOGO,
-                                        width: screenWidth * 0.35,
+                                        width: screenWidth * 0.2,
                                       ),
                                     ),
                                     const SizedBox(height: 20),

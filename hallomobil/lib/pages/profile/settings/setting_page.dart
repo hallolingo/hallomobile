@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hallomobil/app_router.dart';
 import 'package:hallomobil/constants/color/color_constants.dart';
+import 'package:hallomobil/pages/home/private_lesson_page.dart';
 import 'package:hallomobil/widgets/custom_snackbar.dart';
 import 'package:country_flags/country_flags.dart';
 
@@ -313,6 +314,17 @@ class _SettingsPageState extends State<SettingsPage>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _buildLanguageBottomSheet(),
+    );
+  }
+
+  void _goSpecialLessonPage() {
+    if (!mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PrivateLessonsPage(user: widget.user),
+      ),
     );
   }
 
@@ -1058,7 +1070,7 @@ class _SettingsPageState extends State<SettingsPage>
                 delegate: SliverChildListDelegate(
                   [
                     Padding(
-                      padding: const EdgeInsets.all(20.0),
+                      padding: const EdgeInsets.all(10.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -1066,7 +1078,7 @@ class _SettingsPageState extends State<SettingsPage>
                           _buildModernCard(
                             animationIndex: 0,
                             child: Padding(
-                              padding: const EdgeInsets.all(24),
+                              padding: const EdgeInsets.all(12),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -1094,7 +1106,7 @@ class _SettingsPageState extends State<SettingsPage>
                                       ),
                                       const SizedBox(width: 16),
                                       const Text(
-                                        'Dil Ayarları',
+                                        'Uygulama',
                                         style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
@@ -1130,6 +1142,14 @@ class _SettingsPageState extends State<SettingsPage>
                                             ),
                                           ),
                                   ),
+                                  _buildSettingItem(
+                                    icon: Icons.translate,
+                                    title: 'Özel Ders',
+                                    subtitle:
+                                        'Özel ders kursu için tıklayınız.',
+                                    onTap: _goSpecialLessonPage,
+                                    color: ColorConstants.MAINCOLOR,
+                                  ),
                                 ],
                               ),
                             ),
@@ -1138,7 +1158,7 @@ class _SettingsPageState extends State<SettingsPage>
                           _buildModernCard(
                             animationIndex: 1,
                             child: Padding(
-                              padding: const EdgeInsets.all(24),
+                              padding: const EdgeInsets.all(12),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -1205,7 +1225,7 @@ class _SettingsPageState extends State<SettingsPage>
                           _buildModernCard(
                             animationIndex: 2,
                             child: Padding(
-                              padding: const EdgeInsets.all(24),
+                              padding: const EdgeInsets.all(12),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -1274,7 +1294,7 @@ class _SettingsPageState extends State<SettingsPage>
                           _buildModernCard(
                             animationIndex: 3,
                             child: Padding(
-                              padding: const EdgeInsets.all(24),
+                              padding: const EdgeInsets.all(12),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [

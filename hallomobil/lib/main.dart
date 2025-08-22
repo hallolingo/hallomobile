@@ -16,6 +16,8 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await Future.delayed(const Duration(milliseconds: 300));
+
   runApp(
     MultiProvider(
       providers: [

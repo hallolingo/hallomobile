@@ -111,15 +111,9 @@ class _TranslationPageState extends State<TranslationPage>
     });
 
     try {
-      final response = await http.post(
-        Uri.parse('https://apertium.org/apy/translate'),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'q': _textController.text,
-          'langpair':
-              '${_languageCodes[_sourceLanguage]}|${_languageCodes[_targetLanguage]}',
-          'markUnknown': 'no'
-        },
+      final response = await http.get(
+        Uri.parse(
+            'https://api.mymemory.translated.net/get?q=${Uri.encodeComponent(_textController.text)}&langpair=${_languageCodes[_sourceLanguage]}|${_languageCodes[_targetLanguage]}'),
       );
 
       if (!_isDisposed && mounted) {
@@ -131,7 +125,8 @@ class _TranslationPageState extends State<TranslationPage>
           });
         } else {
           setState(() {
-            _translatedText = 'API hatası: ${response.statusCode}';
+            _translatedText =
+                'API hatası: ${response.statusCode} - ${response.body}';
           });
         }
       }
@@ -420,7 +415,7 @@ class _TranslationPageState extends State<TranslationPage>
                             const SizedBox(height: 6),
                             // Title
                             const Text(
-                              'Çeviri Uygulaması',
+                              'Metin Çevirme',
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -453,7 +448,7 @@ class _TranslationPageState extends State<TranslationPage>
                 delegate: SliverChildListDelegate(
                   [
                     Padding(
-                      padding: const EdgeInsets.all(20.0),
+                      padding: const EdgeInsets.all(10.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -461,7 +456,7 @@ class _TranslationPageState extends State<TranslationPage>
                           _buildModernCard(
                             animationIndex: 0,
                             child: Padding(
-                              padding: const EdgeInsets.all(24),
+                              padding: const EdgeInsets.all(12),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -673,7 +668,7 @@ class _TranslationPageState extends State<TranslationPage>
                           _buildModernCard(
                             animationIndex: 1,
                             child: Padding(
-                              padding: const EdgeInsets.all(24),
+                              padding: const EdgeInsets.all(12),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -801,7 +796,7 @@ class _TranslationPageState extends State<TranslationPage>
                           _buildModernCard(
                             animationIndex: 2,
                             child: Padding(
-                              padding: const EdgeInsets.all(24),
+                              padding: const EdgeInsets.all(12),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [

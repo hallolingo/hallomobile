@@ -65,7 +65,7 @@ class EmailAuthService {
           'reading': {'progress': 0.0, 'lastPracticed': null},
           'writing': {'progress': 0.0, 'lastPracticed': null},
           'listening': {'progress': 0.0, 'lastPracticed': null},
-          'grammar': {'progress': 0.0, 'lastPracticed': null},
+          'words': {'progress': 0.0, 'lastPracticed': null},
         },
       },
     };

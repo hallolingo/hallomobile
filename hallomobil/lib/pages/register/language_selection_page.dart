@@ -137,7 +137,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage>
                 'reading': {'progress': 0.0, 'lastPracticed': null},
                 'writing': {'progress': 0.0, 'lastPracticed': null},
                 'listening': {'progress': 0.0, 'lastPracticed': null},
-                'grammar': {'progress': 0.0, 'lastPracticed': null},
+                'words': {'progress': 0.0, 'lastPracticed': null},
               },
             },
             'createdAt': FieldValue.serverTimestamp(),

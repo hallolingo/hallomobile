@@ -316,7 +316,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                       ),
                                       child: Image.network(
                                         LoginConstants.LOGINLOGO,
-                                        width: screenWidth * 0.35,
+                                        width: screenWidth * 0.2,
                                       ),
                                     ),
                                     const SizedBox(height: 10),

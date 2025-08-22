@@ -3,17 +3,17 @@
     "platforms": {
       "android": {
         "default": {
-          "projectId": "hallolingo-2d19c",
-          "appId": "1:803159476893:android:02194f8786872280efe274",
+          "projectId": "hallolingo-739a8",
+          "appId": "1:1018144025658:android:4eb836e1e2ad09bea21903",
           "fileOutput": "android/app/google-services.json"
         }
       },
       "dart": {
         "lib/firebase_options.dart": {
-          "projectId": "hallolingo-2d19c",
+          "projectId": "hallolingo-739a8",
           "configurations": {
-            "android": "1:803159476893:android:02194f8786872280efe274",
-            "ios": "1:803159476893:ios:c8cdefe068c480c1efe274"
+            "android": "1:1018144025658:android:4eb836e1e2ad09bea21903",
+            "ios": "1:1018144025658:ios:2e89ccebd3d8ff1fa21903"
           }
         }
       }
@@ -34,9 +34,7 @@
         "firebase-debug.*.log",
         "*.local"
       ],
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run build"
-      ]
+      "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
     }
   ]
 }

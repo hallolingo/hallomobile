@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hallomobil/app_router.dart';
 import 'package:hallomobil/constants/color/color_constants.dart';
-import 'package:hallomobil/constants/register/register_constants.dart';
 import 'package:hallomobil/services/auth/email_auth_service.dart';
 import 'package:hallomobil/services/google/google_auth_service.dart';
 import 'package:hallomobil/widgets/custom_snackbar.dart';

@@ -1,0 +1,4 @@
+-keep class com.google.android.exoplayer2.** { *; }
+-keep class androidx.media3.exoplayer.** { *; }
+-dontwarn com.google.android.exoplayer2.**
+-dontwarn androidx.media3.exoplayer.**

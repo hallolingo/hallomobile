@@ -41,8 +41,7 @@ class SkillsProgressWidget extends StatelessWidget {
                 progress: skills['listening']?['progress'] ?? 0.0),
             const Divider(),
             SkillItemWidget(
-                title: 'Gramer',
-                progress: skills['grammar']?['progress'] ?? 0.0),
+                title: 'Kelime', progress: skills['words']?['progress'] ?? 0.0),
           ],
         ),
       ),

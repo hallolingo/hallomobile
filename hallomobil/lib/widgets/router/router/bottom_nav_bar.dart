@@ -45,7 +45,7 @@ class CustomBottomNavBar extends StatelessWidget {
             selectedColor: ColorConstants.WHITE,
           ),
           NavItem(
-            icon: Icons.video_collection_rounded,
+            icon: Icons.school,
             selectedIcon: Icons.book,
             index: 3,
             selectedIndex: selectedIndex,

@@ -14,8 +14,17 @@
   	   </dict>
 	</array>
 
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Downloading files requires access to your photo library.</string>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>Downloading audio files requires access to your media library.</string>
 
 
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need microphone access to record your pronunciation.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>We need speech recognition to evaluate your pronunciation.</string>
+	
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>We need speech recognition to enable text-to-speech functionality.</string>
 	<key>CFBundleDevelopmentRegion</key>

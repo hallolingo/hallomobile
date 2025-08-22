@@ -7,9 +7,9 @@ class LevelService {
 
   Future<void> updateSkillProgress({
     required String userId,
-    required String language, // Hangi dil için
-    required String skill, // reading, writing, listening, grammar
-    required double newProgress, // 0.0 - 100.0 arası
+    required String language,
+    required String skill,
+    required double newProgress,
   }) async {
     try {
       final userRef = _firestore.collection('users').doc(userId);
@@ -97,7 +97,7 @@ class LevelService {
               'reading': {'progress': 0.0, 'lastPracticed': null},
               'writing': {'progress': 0.0, 'lastPracticed': null},
               'listening': {'progress': 0.0, 'lastPracticed': null},
-              'grammar': {'progress': 0.0, 'lastPracticed': null},
+              'words': {'progress': 0.0, 'lastPracticed': null},
             },
           },
           'createdAt': FieldValue.serverTimestamp(),
