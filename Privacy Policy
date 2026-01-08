@@ -1,0 +1,268 @@
+# HalloLingo Gizlilik Politikası
+
+**Son Güncelleme: 8 Ocak 2026**
+
+HalloLingo olarak kullanıcılarımızın gizliliğine önem veriyoruz. Bu Gizlilik Politikası, kişisel verilerinizin nasıl toplandığını, kullanıldığını, saklandığını ve korunduğunu açıklamaktadır.
+
+## 1. Veri Sorumlusu
+
+**Veri Sorumlusu:** HalloLingo  
+**E-posta:** kirmizibulent@gmail.com  
+**Adres:** Ankara, Türkiye
+
+6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında veri sorumlusu olarak hareket etmekteyiz.
+
+## 2. Toplanan Kişisel Veriler
+
+### 2.1 Kayıt Sırasında Toplanan Veriler
+
+**E-posta ile Kayıt:**
+- Ad ve Soyad
+- E-posta adresi
+- Şifre (şifrelenmiş halde saklanır)
+- Hesap oluşturma tarihi
+
+**Google ile Kayıt:**
+- Ad ve Soyad
+- E-posta adresi
+- Google profil fotoğrafı
+- Google Kullanıcı ID'si (UID)
+- Hesap oluşturma tarihi
+
+### 2.2 Kullanım Sırasında Toplanan Veriler
+
+- Seçilen öğrenme dili (Almanca)
+- Kullanıcı seviyesi (Başlangıç, Orta, İleri)
+- Egzersiz sonuçları ve performans verileri
+- İlerleme kayıtları (okuma, yazma, dinleme, kelime)
+- Son giriş tarihi ve saati
+- Uygulama kullanım istatistikleri
+- Cihaz bilgileri (model, işletim sistemi)
+- IP adresi
+
+### 2.3 E-posta Doğrulama Verileri
+
+- 6 haneli doğrulama kodları (5 dakika süreyle saklanır)
+- Doğrulama durumu (isEmailVerification)
+- Kod oluşturma ve kullanım zamanı
+
+## 3. Verilerin Toplanma Yöntemleri
+
+### 3.1 Doğrudan Toplama
+- Kayıt formları
+- Profil güncellemeleri
+- Egzersiz tamamlama formları
+
+### 3.2 Otomatik Toplama
+- Firebase Analytics
+- Uygulama kullanım logları
+- Hata raporları
+
+### 3.3 Üçüncü Taraf Entegrasyonlar
+- Google Sign-In (Google hesabı ile giriş)
+- Firebase Authentication
+- Cloud Firestore (veri saklama)
+
+## 4. Verilerin Kullanım Amaçları
+
+Kişisel verileriniz aşağıdaki amaçlarla kullanılır:
+
+### 4.1 Hizmet Sunumu
+- Kullanıcı hesabı oluşturma ve yönetimi
+- Kimlik doğrulama ve güvenlik
+- Kişiselleştirilmiş öğrenme deneyimi sunma
+- İlerleme takibi ve raporlama
+- Egzersiz içerikleri sağlama
+
+### 4.2 İletişim
+- Hoş geldiniz e-postaları gönderme
+- E-posta doğrulama kodları gönderme
+- Şifre sıfırlama bağlantıları gönderme
+- Önemli hesap bildirimleri
+- Özellik güncellemeleri ve duyurular
+
+### 4.3 Analiz ve İyileştirme
+- Uygulama performansını analiz etme
+- Kullanıcı deneyimini geliştirme
+- Hata ayıklama ve sorun giderme
+- İstatistiksel analizler yapma
+
+### 4.4 Güvenlik
+- Hesap güvenliğini sağlama
+- Yetkisiz erişimi önleme
+- Spam ve kötüye kullanımı tespit etme
+
+## 5. Veri Paylaşımı
+
+### 5.1 Üçüncü Taraf Servisler
+
+Verileriniz aşağıdaki güvenilir üçüncü taraf servislerle paylaşılır:
+
+**Firebase (Google):**
+- Authentication (Kimlik doğrulama)
+- Cloud Firestore (Veri saklama)
+- Cloud Functions (Arka plan işlemleri)
+- Analytics (Kullanım analizi)
+
+**Google Sign-In:**
+- OAuth 2.0 kimlik doğrulama servisi
+
+**Nodemailer (Gmail SMTP):**
+- E-posta gönderimi için kullanılır
+- Konfigürasyon: kirmizibulent@gmail.com
+
+### 5.2 Yasal Yükümlülükler
+
+Verileriniz aşağıdaki durumlarda yetkili makamlarla paylaşılabilir:
+- Yasal zorunluluklar
+- Mahkeme kararları
+- Kamu güvenliği gereklilikleri
+- Yasal hakların korunması
+
+### 5.3 Paylaşılmayan Durumlar
+
+- Verileriniz pazarlama amaçlı üçüncü taraflara satılmaz
+- Reklam şirketleriyle paylaşılmaz (uygulamamızda reklam yoktur)
+- Kullanıcı verileriniz ticari amaçla kullanılmaz
+
+## 6. Çerezler ve İzleme Teknolojileri
+
+### 6.1 Firebase Analytics
+Anonim kullanım verileri toplar:
+- Sayfa görüntülemeleri
+- Oturum süreleri
+- Uygulama çökmeleri
+- Cihaz özellikleri
+
+### 6.2 Authentication Tokens
+- Oturum yönetimi için kullanılır
+- Güvenli bağlantı sağlar
+- Otomatik yenilenir
+
+## 7. Veri Güvenliği
+
+Verilerinizi korumak için aldığımız önlemler:
+
+### 7.1 Teknik Önlemler
+- Firebase güvenlik kuralları (europe-west3 bölgesi)
+- SSL/TLS şifrelemesi
+- Şifrelerin hash'lenerek saklanması
+- Güvenli kimlik doğrulama protokolleri
+- Düzenli güvenlik güncellemeleri
+
+### 7.2 İdari Önlemler
+- Sınırlı personel erişimi
+- Gizlilik eğitimleri
+- Veri işleme prosedürleri
+- Düzenli güvenlik denetimleri
+
+### 7.3 Otomatik Veri Temizleme
+- Süresi dolmuş doğrulama kodları 5 dakikada bir otomatik silinir
+- Kullanılmayan veriler düzenli olarak temizlenir
+
+## 8. Veri Saklama Süreleri
+
+### 8.1 Aktif Hesaplar
+- Kullanıcı verileri hesap aktif olduğu sürece saklanır
+- Öğrenme verileri süresiz saklanır (ilerleme takibi için)
+
+### 8.2 Doğrulama Kodları
+- 5 dakika süreyle saklanır
+- Süre dolunca otomatik silinir (Cloud Functions ile)
+
+### 8.3 Log Kayıtları
+- Aktivite logları 90 gün saklanır
+- Güvenlik logları 1 yıl saklanır
+
+### 8.4 Silinmiş Hesaplar
+- Hesap silindikten sonra veriler 30 gün içinde tamamen silinir
+- Yedekleme sistemlerinden de kaldırılır
+
+## 9. Kullanıcı Hakları (KVKK Uyarınca)
+
+6698 sayılı KVKK kapsamında aşağıdaki haklara sahipsiniz:
+
+### 9.1 Bilgi Alma Hakkı
+- Kişisel verilerinizin işlenip işlenmediğini öğrenme
+- İşlenmişse buna ilişkin bilgi talep etme
+
+### 9.2 Erişim Hakkı
+- Kişisel verilerinize erişim talep etme
+- Verilerinizin bir kopyasını alma
+
+### 9.3 Düzeltme Hakkı
+- Yanlış veya eksik verilerin düzeltilmesini isteme
+- Profil bilgilerinizi güncelleme
+
+### 9.4 Silme Hakkı
+- Hesabınızı ve tüm verilerinizi silme
+- "Unutulma hakkı" kapsamında verilerin silinmesini talep etme
+
+### 9.5 İtiraz Hakkı
+- Veri işleme faaliyetlerine itiraz etme
+- Otomatik karar verme süreçlerine itiraz etme
+
+### 9.6 Veri Taşınabilirliği
+- Verilerinizi yapılandırılmış formatta alma
+- Başka bir platforma aktarma
+
+### 9.7 Şikayet Hakkı
+- Kişisel Verileri Koruma Kurumu'na başvurma
+
+## 10. Çocukların Gizliliği
+
+- Uygulamamız 13 yaş altı çocuklara yönelik değildir
+- Bilerek 13 yaş altı çocuklardan veri toplamayız
+- Ebeveyn onayı olmadan çocuk verisi işlemeyiz
+- 13-18 yaş arası kullanıcılar için ebeveyn onayı önerilir
+
+## 11. Uluslararası Veri Transferi
+
+- Verileriniz Firebase europe-west3 (Almanya) bölgesinde saklanır
+- Google'ın veri koruma standartlarına tabidir
+- AB GDPR kurallarına uygun işlenir
+- Veri transferi için uygun güvenlik önlemleri alınır
+
+## 12. Politika Güncellemeleri
+
+- Bu Gizlilik Politikası düzenli olarak gözden geçirilir
+- Önemli değişiklikler e-posta ile bildirilir
+- Son güncelleme tarihi sayfanın üstünde belirtilir
+- Güncellemeler yayınlandıktan sonra uygulamayı kullanmaya devam etmeniz, değişiklikleri kabul ettiğiniz anlamına gelir
+
+## 13. İletişim ve Başvuru
+
+Gizlilik Politikası veya kişisel verilerinizle ilgili sorularınız için:
+
+**E-posta:** kirmizibulent@gmail.com  
+**Konu:** KVKK - Kişisel Veri Talebi  
+**Adres:** Ankara, Türkiye
+
+### Başvuru Prosedürü:
+1. Kimlik doğrulama (TC Kimlik numarası veya e-posta doğrulama)
+2. Talebinizi açıkça belirtin
+3. 30 gün içinde yanıt alırsınız
+4. Talepler ücretsizdir (maliyetli olanlar için makul ücret talep edilebilir)
+
+## 14. Veri Güvenliği İhlali Bildirimi
+
+Veri güvenliği ihlali durumunda:
+- 72 saat içinde Kişisel Verileri Koruma Kurumu'na bildirim yapılır
+- Etkilenen kullanıcılar e-posta ile bilgilendirilir
+- Alınan önlemler ve çözüm adımları paylaşılır
+
+## 15. Rıza ve Kabul
+
+HalloLingo uygulamasını kullanarak:
+- Bu Gizlilik Politikasını okuduğunuzu ve anladığınızı
+- Kişisel verilerinizin yukarıda belirtilen şekilde işlenmesine rıza gösterdiğinizi
+- KVKK kapsamındaki haklarınızdan haberdar olduğunuzu
+
+kabul ve beyan etmiş olursunuz.
+
+---
+
+**Son Güncelleme:** 8 Ocak 2026  
+**Versiyon:** 1.0  
+
+Bu Gizlilik Politikası, 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) ve AB Genel Veri Koruma Yönetmeliği (GDPR) gerekliliklerine uygun olarak hazırlanmıştır.
